@@ -382,8 +382,12 @@ if (!BOT_TOKEN) {
     }]));
     const oldPriceLine = pkg.oldPrice ? `\n~~${pkg.oldPrice}₽~~ → *${pkg.price}₽*` : `\n💰 ${pkg.price}₽`;
     const oldPriceBtnText = pkg.oldPrice ? `📉 Старая цена: ${pkg.oldPrice}₽` : '📉 Добавить старую цену';
+    const imgStatus = pkg.image ? '✅ есть' : '❌ нет';
+    const imageButtons = pkg.image
+      ? [{ text: '🖼 Загрузить фон', callback_data: `pkg_image_${pkg.id}` }, { text: '🗑 Очистить фон', callback_data: `pkg_image_clear_${pkg.id}` }]
+      : [{ text: '🖼 Загрузить фон', callback_data: `pkg_image_${pkg.id}` }];
     bot.sendMessage(chatId,
-      `${pkg.featured ? '⭐ ' : ''}*${pkg.name}*\n⏱ ${pkg.duration}${oldPriceLine}${pkg.badge ? ` · 🏷 ${pkg.badge}` : ''}\n\n*Опции:*\n${featStr}`,
+      `${pkg.featured ? '⭐ ' : ''}*${pkg.name}*\n⏱ ${pkg.duration}${oldPriceLine}${pkg.badge ? ` · 🏷 ${pkg.badge}` : ''}\n🖼 Фон: ${imgStatus}\n\n*Опции:*\n${featStr}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {
@@ -398,6 +402,7 @@ if (!BOT_TOKEN) {
             ],
             [{ text: oldPriceBtnText, callback_data: `pkg_edit_oldprice_${pkg.id}` }],
             [{ text: pkg.featured ? '⭐ Убрать ХИТ' : '⭐ Сделать ХИТ', callback_data: `pkg_toggle_${pkg.id}` }],
+            imageButtons,
             [{ text: '➕ Добавить опцию', callback_data: `pkg_feat_add_${pkg.id}` }],
             ...featDeleteBtns,
             [{ text: '🗑 Удалить тариф', callback_data: `pkg_delete_${pkg.id}` }],
@@ -654,6 +659,22 @@ if (!BOT_TOKEN) {
       bot.sendMessage(chatId, '✅ Тариф удалён!');
       sendPackagesList(chatId);
 
+    } else if (data.startsWith('pkg_image_clear_')) {
+      const id = data.replace('pkg_image_clear_', '');
+      const s = readJSON(SETTINGS_FILE);
+      const pkg = (s.packages || []).find(p => p.id === id);
+      if (pkg) {
+        delete pkg.image;
+        writeJSON(SETTINGS_FILE, s);
+        bot.sendMessage(chatId, '✅ Фоновая картинка тарифа удалена!');
+        sendPackageCard(chatId, pkg);
+      }
+    } else if (data.startsWith('pkg_image_')) {
+      const id = data.replace('pkg_image_', '');
+      if (id.startsWith('clear_')) return; // уже обработано выше
+      setState(chatId, { action: 'pkg_image', id });
+      bot.sendMessage(chatId, '🖼 Отправь картинку для фона тарифа:');
+
     // ── Залы ──
     } else if (data === 'room_list') {
       sendRoomsList(chatId);
@@ -835,7 +856,8 @@ if (!BOT_TOKEN) {
           price,
           features: [],
           featured: false,
-          badge: null
+          badge: null,
+          image: null
         };
         s.packages = s.packages || [];
         s.packages.push(newPkg);
@@ -952,6 +974,29 @@ if (!BOT_TOKEN) {
             clearState(chatId);
             bot.sendMessage(chatId, '✅ Фото зала обновлено!');
             sendRoomCard(chatId, room);
+          }
+        });
+      });
+      return;
+    }
+
+    // ── Фото тарифа ──
+    if (st.action === 'pkg_image') {
+      const filename = 'pkg_' + Date.now() + ext;
+      const dest = path.join(UPLOADS_DIR, filename);
+      const file = fs.createWriteStream(dest);
+      https.get(fileUrl, (response) => {
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          const s = readJSON(SETTINGS_FILE);
+          const pkg = (s.packages || []).find(p => p.id === st.id);
+          if (pkg) {
+            pkg.image = '/uploads/' + filename;
+            writeJSON(SETTINGS_FILE, s);
+            clearState(chatId);
+            bot.sendMessage(chatId, '✅ Фон тарифа обновлён!');
+            sendPackageCard(chatId, pkg);
           }
         });
       });

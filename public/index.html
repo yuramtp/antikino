@@ -418,76 +418,6 @@
   .dt-btn-display:hover, .dt-btn-display.has-value { border-color: rgba(255,255,255,0.3); }
   .dt-btn-display.has-value { color: var(--white); }
 
-  /* CAROUSEL */
-  .carousel-section { background: var(--black); }
-  .carousel-wrap {
-    position: relative; overflow: hidden;
-    max-width: 780px; margin: 0 auto; border-radius: 12px;
-  }
-  .carousel-track {
-    display: flex; transition: transform 0.5s cubic-bezier(.25,.46,.45,.94);
-  }
-  .carousel-slide { min-width: 100%; position: relative; }
-  .carousel-img {
-    width: 100%; aspect-ratio: 16/9;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
-  }
-  .carousel-img::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 50%);
-  }
-  .carousel-icon {
-    font-size: 80px; position: relative; z-index: 1;
-    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
-    animation: carouselFloat 3s ease-in-out infinite;
-  }
-  @keyframes carouselFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-  .carousel-caption {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 32px 28px 28px; z-index: 2;
-    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%);
-  }
-  .carousel-title {
-    font-family: 'Montserrat', sans-serif; font-weight: 700;
-    font-size: 22px; margin-bottom: 6px; color: var(--white);
-  }
-  .carousel-desc {
-    font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.5;
-  }
-  .carousel-arrow {
-    position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(10,10,10,0.7); border: 1px solid rgba(255,255,255,0.15);
-    color: #fff; font-size: 28px; line-height: 1; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; font-family: 'Inter', sans-serif;
-    backdrop-filter: blur(4px);
-  }
-  .carousel-arrow:hover { background: rgba(10,10,10,0.9); border-color: var(--red); }
-  .carousel-arrow-prev { left: 12px; }
-  .carousel-arrow-next { right: 12px; }
-  .carousel-dots {
-    display: flex; justify-content: center; gap: 10px; margin-top: 20px;
-  }
-  .carousel-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: rgba(255,255,255,0.2); border: none; cursor: pointer;
-    transition: all 0.3s; padding: 0;
-  }
-  .carousel-dot.active { background: var(--red); width: 28px; border-radius: 5px; }
-  @media (max-width: 768px) {
-    .carousel-img { aspect-ratio: 4/3; }
-    .carousel-icon { font-size: 56px; }
-    .carousel-caption { padding: 20px 16px 16px; }
-    .carousel-title { font-size: 18px; }
-    .carousel-desc { font-size: 13px; }
-    .carousel-arrow { width: 36px; height: 36px; font-size: 22px; }
-  }
-
   /* ANIMATIONS */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(28px); }
@@ -915,56 +845,6 @@
     </div>
   </div>
 </div>
-
-<!-- CAROUSEL -->
-<section class="carousel-section reveal" id="carousel">
-  <div class="section-label">Галерея</div>
-  <div class="section-title">Атмосфера Imperial <span class="accent">Vision</span></div>
-  <p class="section-desc">Посмотри, как выглядят наши залы и как мы создаём настроение для твоего вечера.</p>
-  <div class="carousel-wrap">
-    <div class="carousel-track" id="carouselTrack">
-      <div class="carousel-slide">
-        <div class="carousel-img" style="background:linear-gradient(135deg,#2a0a0a,#4a1515)">
-          <div class="carousel-icon">🎬</div>
-        </div>
-        <div class="carousel-caption">
-          <div class="carousel-title">Кино на большом экране</div>
-          <div class="carousel-desc">4K-проектор и объёмный звук — полное погружение в фильм</div>
-        </div>
-      </div>
-      <div class="carousel-slide">
-        <div class="carousel-img" style="background:linear-gradient(135deg,#0a0a2a,#15154a)">
-          <div class="carousel-icon">🎵</div>
-        </div>
-        <div class="carousel-caption">
-          <div class="carousel-title">Своя музыка в зале</div>
-          <div class="carousel-desc">Подключай телефон и ставь любимые треки через акустику</div>
-        </div>
-      </div>
-      <div class="carousel-slide">
-        <div class="carousel-img" style="background:linear-gradient(135deg,#2a1a0a,#4a2a15)">
-          <div class="carousel-icon">🍿</div>
-        </div>
-        <div class="carousel-caption">
-          <div class="carousel-title">Допы и снеки</div>
-          <div class="carousel-desc">Попкорн, наггетсы, напитки — закажи к началу сеанса</div>
-        </div>
-      </div>
-      <div class="carousel-slide">
-        <div class="carousel-img" style="background:linear-gradient(135deg,#0a2a1a,#154a2a)">
-          <div class="carousel-icon">💑</div>
-        </div>
-        <div class="carousel-caption">
-          <div class="carousel-title">Романтический вечер</div>
-          <div class="carousel-desc">Свечи, вино и любимый фильм — свидание, которое запомнится</div>
-        </div>
-      </div>
-    </div>
-    <button class="carousel-arrow carousel-arrow-prev" onclick="prevSlide()" aria-label="Предыдущий">‹</button>
-    <button class="carousel-arrow carousel-arrow-next" onclick="nextSlide()" aria-label="Следующий">›</button>
-  </div>
-  <div class="carousel-dots" id="carouselDots"></div>
-</section>
 
 <!-- FOOTER -->
 <footer>
@@ -1470,7 +1350,7 @@
     const name = (nameInput?.value || '').trim();
     if (!name) { nameInput?.focus(); return; }
 
-    if (!validatePhone('chatPhoneNumber')) { showToast('Неправильно набран номер'); return; }
+    if (!validatePhone('chatPhoneNumber', 10)) { showToast('Неправильно набран номер'); return; }
     const number = (document.getElementById('chatPhoneNumber')?.value || '').trim();
     const phone = '+7 ' + number;
 
@@ -1788,88 +1668,6 @@
     if (btn) { btn.textContent = 'Выбрать дату и время'; btn.classList.remove('has-value'); }
   };
 
-  // ─── Карусель ────────────────────────────────────────────────────────────
-  let currentSlide = 0;
-  let carouselTimer = null;
-  const CAROUSEL_INTERVAL = 5000;
-
-  function getCarouselTrack() {
-    return document.getElementById('carouselTrack');
-  }
-
-  function updateCarousel() {
-    const track = getCarouselTrack();
-    if (!track) return;
-    const slides = track.querySelectorAll('.carousel-slide');
-    if (!slides.length) return;
-    if (currentSlide >= slides.length) currentSlide = 0;
-    if (currentSlide < 0) currentSlide = slides.length - 1;
-    track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-    document.querySelectorAll('.carousel-dot').forEach((d, i) => {
-      d.classList.toggle('active', i === currentSlide);
-    });
-  }
-
-  function nextSlide() {
-    const track = getCarouselTrack();
-    if (!track) return;
-    const count = track.querySelectorAll('.carousel-slide').length;
-    currentSlide = (currentSlide + 1) % count;
-    updateCarousel();
-    resetCarouselTimer();
-  }
-
-  function prevSlide() {
-    const track = getCarouselTrack();
-    if (!track) return;
-    const count = track.querySelectorAll('.carousel-slide').length;
-    currentSlide = (currentSlide - 1 + count) % count;
-    updateCarousel();
-    resetCarouselTimer();
-  }
-
-  function goToSlide(i) {
-    currentSlide = i;
-    updateCarousel();
-    resetCarouselTimer();
-  }
-
-  function resetCarouselTimer() {
-    if (carouselTimer) clearInterval(carouselTimer);
-    carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
-  }
-
-  function renderCarouselDots() {
-    const track = getCarouselTrack();
-    const dots = document.getElementById('carouselDots');
-    if (!track || !dots) return;
-    const count = track.querySelectorAll('.carousel-slide').length;
-    dots.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-      const dot = document.createElement('button');
-      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('onclick', 'goToSlide(' + i + ')');
-      dot.setAttribute('aria-label', 'Слайд ' + (i + 1));
-      dots.appendChild(dot);
-    }
-  }
-
-  // Запуск карусели
-  function initCarousel() {
-    renderCarouselDots();
-    carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
-  }
-
-  // Останавливаем автопрокрутку при наведении
-  document.addEventListener('DOMContentLoaded', () => {
-    const wrap = document.querySelector('.carousel-wrap');
-    if (wrap) {
-      wrap.addEventListener('mouseenter', () => {
-        if (carouselTimer) clearInterval(carouselTimer);
-      });
-      wrap.addEventListener('mouseleave', resetCarouselTimer);
-    }
-  });
 
   // ─── Scroll reveal ───────────────────────────────────────────────────────
   let _animationsInited = false;
@@ -1897,7 +1695,6 @@
       const res = await fetch('/api/data');
       siteData = await res.json();
       renderAll();
-      initCarousel();
       // Показываем выбор города при входе
       if (siteData.cities && siteData.cities.length > 0) {
         openCityModal();

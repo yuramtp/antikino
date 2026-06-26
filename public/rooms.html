@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Залы — АнтиКино</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --red: #D0021B; --red-dark: #A80116; --black: #0A0A0A; --white: #FFFFFF; --gray: #1A1A1A; --gray-light: #2A2A2A; --text-muted: rgba(255,255,255,0.6); }
+  body { font-family: 'Inter', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: 2px; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--red); }
+  .nav-back { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .nav-back:hover { color: var(--white); }
+
+  .page { padding: 96px 48px 64px; max-width: 1200px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--red); text-transform: uppercase; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+  .section-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(28px, 4vw, 48px); margin-bottom: 48px; line-height: 1.1; }
+
+  .rooms-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .room-card {
+    background: var(--gray); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .room-card:hover { border-color: var(--red); transform: translateY(-4px); }
+
+  .room-photo {
+    width: 100%; aspect-ratio: 4/3; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; background: #111;
+  }
+  .room-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .room-photo-placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 52px;
+    color: rgba(255,255,255,0.04);
+  }
+  .room-photo-placeholder.c1 { background: linear-gradient(135deg, #1a0a08, #3d1010); }
+  .room-photo-placeholder.c2 { background: linear-gradient(135deg, #0a0a1a, #12123d); }
+  .room-photo-placeholder.c3 { background: linear-gradient(135deg, #081a0a, #103d12); }
+  .room-photo-placeholder.cx { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); }
+
+  .room-body { padding: 24px; }
+  .room-tag { font-size: 11px; color: var(--red); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; font-family: 'Montserrat', sans-serif; }
+  .room-name { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 22px; margin-bottom: 16px; }
+  .room-features { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .feature-pill { font-size: 12px; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.06); padding: 5px 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.08); }
+
+  .btn-book {
+    display: block; width: 100%; padding: 13px;
+    background: var(--red); color: var(--white); border: none;
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: 1px; text-transform: uppercase; text-align: center;
+    text-decoration: none; border-radius: 4px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-book:hover { background: var(--red-dark); }
+
+  .empty { text-align: center; padding: 80px 0; color: var(--text-muted); font-size: 15px; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 20px; }
+    .page { padding: 80px 20px 48px; }
+    .rooms-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">АНТИ<span>КИНО</span></a>
+  <a class="nav-back" href="/">← На главную</a>
+</nav>
+
+<div class="page">
+  <div class="section-label">Наши залы</div>
+  <div class="section-title">Выбери свою<br>атмосферу</div>
+  <div class="rooms-grid" id="roomsGrid">
+    <div class="empty">Загрузка...</div>
+  </div>
+</div>
+
+<script>
+  const PLACEHOLDER_CLASSES = ['c1', 'c2', 'c3', 'cx'];
+
+  async function loadRooms() {
+    const grid = document.getElementById('roomsGrid');
+    try {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const rooms = data.rooms || [];
+
+      if (rooms.length === 0) {
+        grid.innerHTML = '<div class="empty">Залы скоро появятся</div>';
+        return;
+      }
+
+      grid.innerHTML = rooms.map((r, i) => {
+        const cls = PLACEHOLDER_CLASSES[i % PLACEHOLDER_CLASSES.length];
+        const photo = r.photo
+          ? `<img src="${r.photo}" alt="${r.name}" loading="lazy">`
+          : `<div class="room-photo-placeholder ${cls}">${r.name[0]}</div>`;
+        const features = (r.features || []).map(f => `<span class="feature-pill">${f}</span>`).join('');
+        return `
+          <div class="room-card">
+            <div class="room-photo">${photo}</div>
+            <div class="room-body">
+              <div class="room-tag">${r.tag || ''}</div>
+              <div class="room-name">${r.name}</div>
+              <div class="room-features">${features}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div class="empty">Не удалось загрузить залы</div>';
+    }
+  }
+
+  loadRooms();
+</script>
+</body>
+</html>

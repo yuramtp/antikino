@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Допы и снеки — АнтиКино</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --red: #D0021B; --red-dark: #A80116; --black: #0A0A0A; --white: #FFFFFF; --gray: #1A1A1A; --gray-light: #2A2A2A; --text-muted: rgba(255,255,255,0.6); }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--black) url('2.jpg') no-repeat fixed center center / cover;
+    color: var(--white);
+    min-height: 100vh;
+    position: relative;
+  }
+  .bg-overlay {
+    position: fixed; inset: 0; z-index: 0;
+    background: rgba(10,10,10,0.55);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: 2px; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--red); }
+  .nav-back { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .nav-back:hover { color: var(--white); }
+
+  .page { padding: 96px 48px 64px; max-width: 1000px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--red); text-transform: uppercase; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+  .section-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(28px, 4vw, 48px); margin-bottom: 12px; line-height: 1.1; }
+  .section-desc { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 560px; margin-bottom: 48px; }
+
+  .snacks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .snack-card {
+    background: rgba(26,26,26,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 32px 20px 24px;
+    text-align: center;
+    transition: border-color 0.25s, transform 0.25s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .snack-card:hover {
+    border-color: rgba(208,2,27,0.4);
+    transform: translateY(-3px);
+  }
+  .snack-card.has-image { padding: 0; }
+  .snack-card.has-image .snack-body {
+    position: relative; z-index: 1;
+    padding: 32px 20px 24px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.05) 100%);
+    min-height: 200px;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  }
+  .snack-card.has-image .snack-bg { position: absolute; inset: 0; z-index: 0; }
+  .snack-card.has-image .snack-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .snack-emoji { font-size: 48px; margin-bottom: 14px; display: block; }
+  .snack-emoji img { width: 48px; height: 48px; object-fit: contain; display: inline-block; border-radius: 6px; vertical-align: middle; }
+  .snack-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; font-family: 'Montserrat', sans-serif; }
+  .snack-card.has-image .snack-name { color: #fff; }
+  .snack-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4; }
+  .snack-price {
+    display: inline-block;
+    font-size: 20px; font-weight: 900;
+    color: var(--red);
+    font-family: 'Montserrat', sans-serif;
+  }
+  .snack-price::after { content: ' ₽'; }
+  .snack-card.has-image .snack-price { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+
+  .empty { text-align: center; padding: 80px 0; color: var(--text-muted); font-size: 15px; }
+
+  /* CTA блок внизу */
+  .cta-block {
+    margin-top: 64px;
+    padding: 48px;
+    background: rgba(26,26,26,0.85);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    text-align: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .cta-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 24px; margin-bottom: 12px; }
+  .cta-text { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+  .btn-primary {
+    display: inline-block;
+    background: var(--red); color: var(--white); border: none;
+    padding: 16px 36px; font-size: 15px; font-weight: 700;
+    font-family: 'Montserrat', sans-serif; letter-spacing: 1px;
+    border-radius: 4px; cursor: pointer;
+    transition: all 0.2s; text-transform: uppercase;
+    text-decoration: none;
+  }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 20px; }
+    .page { padding: 80px 20px 48px; }
+    .snacks-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .cta-block { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-overlay"></div>
+
+<nav>
+  <a class="nav-logo" href="/">АНТИ<span>КИНО</span></a>
+  <a class="nav-back" href="/">← На главную</a>
+</nav>
+
+<div class="page" style="position:relative;z-index:1">
+  <div class="section-label">Допы и снеки</div>
+  <div class="section-title">Сделай просмотр<br>ещё вкуснее</div>
+  <p class="section-desc">Закажи попкорн, напитки и снеки прямо к началу сеанса. Добавить можно будет при бронировании.</p>
+
+  <div class="snacks-grid" id="snacksGrid">
+    <div class="empty">Загрузка...</div>
+  </div>
+
+  <div class="cta-block">
+    <div class="cta-title">🍿 Готов попробовать?</div>
+    <div class="cta-text">Выбери пакет и добавь всё это к своему сеансу в пару кликов.</div>
+    <a class="btn-primary" href="/#packages">Выбрать пакет</a>
+  </div>
+</div>
+
+<script>
+  async function loadSnacks() {
+    const grid = document.getElementById('snacksGrid');
+    try {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const snacks = data.snacks || [];
+
+      if (snacks.length === 0) {
+        grid.innerHTML = '<div class="empty">Снеки скоро появятся 🍿</div>';
+        return;
+      }
+
+      grid.innerHTML = snacks.map(s => {
+        const visual = s.thumb ? `<img src="${s.thumb}" alt="${s.name}">` : (s.emoji || '🍿');
+        const hasImg = s.image || s.thumb;
+        return `
+        <div class="snack-card${hasImg ? ' has-image' : ''}">
+          ${s.image ? `<div class="snack-bg"><img src="${s.image}" alt="${s.name}"></div>` : ''}
+          <div class="snack-body">
+            <span class="snack-emoji">${visual}</span>
+            <div class="snack-name">${s.name}</div>
+            <div class="snack-price">${s.price.toLocaleString('ru-RU')}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div class="empty">Не удалось загрузить допы</div>';
+    }
+  }
+
+  loadSnacks();
+</script>
+</body>
+</html>

@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АнтиКино — Частный кинозал</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #D0021B;
+    --red-dark: #A80116;
+    --black: #0A0A0A;
+    --white: #FFFFFF;
+    --gray: #1A1A1A;
+    --gray-light: #2A2A2A;
+    --text-muted: rgba(255,255,255,0.6);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--black); color: var(--white); overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: 2px; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--red); }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a { font-size: 14px; color: rgba(255,255,255,0.75); text-decoration: none; letter-spacing: 0.5px; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--white); }
+  .nav-city {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.6);
+    cursor: pointer; border: 1px solid rgba(255,255,255,0.15);
+    padding: 6px 14px; border-radius: 20px; transition: all 0.2s;
+    background: transparent;
+  }
+  .nav-city:hover { border-color: var(--red); color: var(--white); }
+  .nav-city-dot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; }
+
+  /* CITY MODAL — fullscreen welcome */
+  .city-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.97);
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .city-modal-overlay.open { display: flex; }
+  .city-modal-overlay.closeable { cursor: default; }
+
+  .city-modal {
+    background: var(--gray); color: var(--white);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 40px 36px 32px;
+    width: 480px; max-width: 94vw;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+  }
+
+  .city-modal-dot {
+    width: 10px; height: 10px; background: var(--red);
+    border-radius: 50%; margin: 0 auto 20px;
+  }
+  .city-modal h3 {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: 24px; margin-bottom: 6px; text-align: center; color: var(--white);
+  }
+  .city-modal-sub {
+    font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px;
+  }
+
+  .city-search-wrap {
+    position: relative; margin-bottom: 16px;
+  }
+  .city-search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: rgba(255,255,255,0.3); font-size: 16px; pointer-events: none;
+  }
+  .city-search {
+    width: 100%; padding: 12px 14px 12px 40px;
+    border: 1px solid var(--red); border-radius: 30px;
+    font-size: 15px; font-family: 'Inter', sans-serif;
+    color: var(--white); background: rgba(255,255,255,0.06); outline: none;
+    transition: border-color 0.2s;
+  }
+  .city-search:focus { border-color: #ff1a33; }
+  .city-search::placeholder { color: rgba(255,255,255,0.25); }
+
+  .city-list {
+    display: flex; flex-direction: column; gap: 2px;
+    overflow-y: auto; flex: 1;
+  }
+  .city-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 12px; border-radius: 10px;
+    cursor: pointer; transition: background 0.15s; border: none;
+  }
+  .city-item:hover { background: rgba(255,255,255,0.06); }
+  .city-item.active { background: rgba(208,2,27,0.15); }
+  .city-item-pin {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px;
+  }
+  .city-item-body { flex: 1; }
+  .city-item-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: var(--white); text-transform: uppercase; letter-spacing: 0.5px; }
+  .city-item-addrs { font-size: 12px; color: var(--text-muted); }
+  .city-item-arrow { color: rgba(255,255,255,0.25); font-size: 18px; }
+  .city-no-results { padding: 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+  /* Маленькая кнопка смены города в навигации */
+  .modal-close {
+    display: none;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 0 48px; position: relative; overflow: hidden;
+    background: url('1.jpg') no-repeat center center / cover;
+  }
+  .hero-bg { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse at 70% 50%, rgba(208,2,27,0.12) 0%, transparent 60%); }
+  .hero-overlay { position: absolute; inset: 0; z-index: 0; background: rgba(10,10,10,0.55); }
+  .hero-content { position: relative; z-index: 1; max-width: 640px; }
+  .hero-badge { display: inline-block; background: var(--red); color: var(--white); font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 5px 14px; border-radius: 2px; margin-bottom: 24px; font-family: 'Montserrat', sans-serif; }
+  .hero-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(48px, 7vw, 80px); line-height: 1.0; margin-bottom: 12px; }
+  .hero-title .accent { color: var(--red); text-shadow: 0 0 20px rgba(208,2,27,0.6), 0 0 40px rgba(208,2,27,0.3), 0 0 80px rgba(208,2,27,0.15); animation: glowPulse 2s ease-in-out infinite alternate; }
+@keyframes glowPulse {
+  0% { text-shadow: 0 0 20px rgba(208,2,27,0.5), 0 0 40px rgba(208,2,27,0.2), 0 0 80px rgba(208,2,27,0.1); }
+  100% { text-shadow: 0 0 30px rgba(208,2,27,0.9), 0 0 60px rgba(208,2,27,0.5), 0 0 100px rgba(208,2,27,0.25), 0 0 140px rgba(208,2,27,0.1); }
+}
+  .hero-sub { font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; color: rgba(255,255,255,0.5); letter-spacing: 3px; margin-bottom: 28px; text-transform: uppercase; }
+  .hero-desc { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.7; margin-bottom: 40px; max-width: 480px; }
+  .hero-cta { display: inline-flex; gap: 16px; flex-wrap: wrap; }
+  .btn-primary { background: var(--red); color: var(--white); border: none; padding: 16px 36px; font-size: 15px; font-weight: 700; font-family: 'Montserrat', sans-serif; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.3); padding: 16px 36px; font-size: 15px; font-weight: 500; font-family: 'Montserrat', sans-serif; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost:hover { border-color: var(--white); }
+  .hero-film-strip { position: absolute; right: 48px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; opacity: 0.15; }
+  .film-hole { width: 14px; height: 14px; border-radius: 2px; background: rgba(255,255,255,0.8); }
+
+  /* SECTIONS */
+  section { padding: 96px 48px; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--red); text-transform: uppercase; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; }
+  .section-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(28px, 4vw, 42px); margin-bottom: 16px; line-height: 1.15; }
+  .section-desc { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 560px; margin-bottom: 48px; }
+  .scanline { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--red), transparent); opacity: 0.4; }
+
+  /* FEATURES */
+  .steps-section { background: var(--gray); }
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 48px; }
+  .step { background: var(--black); padding: 36px 32px; position: relative; overflow: hidden; transition: background 0.3s; }
+  .step:hover { background: #111; }
+  .step-num { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 64px; color: rgba(255,255,255,0.04); position: absolute; top: 16px; right: 24px; line-height: 1; }
+  .step-icon { width: 48px; height: 48px; background: var(--red); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+  .step-icon svg { width: 24px; height: 24px; fill: none; stroke: white; stroke-width: 2; }
+  .step-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 12px; }
+  .step-text { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+
+  /* ROOMS */
+  .rooms-section { background: var(--black); }
+  .rooms-slider {
+    position: relative; overflow: hidden;
+    max-width: 680px; margin: 0 auto;
+  }
+  .rooms-track { display: flex; transition: transform 0.4s ease; }
+  .room-slide { min-width: 100%; }
+  .room-card { background: var(--gray); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .room-photo { width: 100%; aspect-ratio: 16/9; overflow: hidden; background: #111; flex-shrink: 0; }
+  .room-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .room-photo-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 52px; color: rgba(255,255,255,0.04); }
+  .room-photo-placeholder.c1 { background: linear-gradient(135deg, #1a0a08, #3d1010); }
+  .room-photo-placeholder.c2 { background: linear-gradient(135deg, #0a0a1a, #12123d); }
+  .room-photo-placeholder.c3 { background: linear-gradient(135deg, #081a0a, #103d12); }
+  .room-photo-placeholder.cx { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); }
+  .room-body { padding: 20px; flex: 1; }
+  .room-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+  .room-tag { font-size: 11px; color: var(--red); letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px; font-family: 'Montserrat', sans-serif; }
+  .room-features { display: flex; flex-wrap: wrap; gap: 6px; }
+  .feature-pill { font-size: 11px; color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.08); }
+
+  .room-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(10,10,10,0.75); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 28px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s, opacity 0.3s ease;
+    font-family: 'Inter', sans-serif;
+  }
+  .room-arrow:hover { background: rgba(10,10,10,0.95); border-color: var(--red); }
+  .room-arrow-prev { left: 8px; }
+  .room-arrow-next { right: 8px; }
+
+  .rooms-nav {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    margin-top: 20px;
+  }
+  .room-dots { display: flex; gap: 8px; }
+  .room-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); border: none; cursor: pointer;
+    transition: background 0.2s; padding: 0;
+  }
+  .room-dot.active { background: var(--red); }
+  .rooms-all-link {
+    font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none;
+    transition: color 0.2s; font-family: 'Montserrat', sans-serif; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .rooms-all-link:hover { color: var(--white); }
+
+  /* PACKAGES */
+  .packages-section { background: var(--gray); }
+  .packages-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .pkg-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 32px 28px; transition: border-color 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .pkg-card:hover { border-color: rgba(208,2,27,0.5); }
+  .pkg-card.featured { border-color: var(--red); }
+  .pkg-badge { position: absolute; top: 0; right: 0; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 5px 14px; letter-spacing: 1px; font-family: 'Montserrat', sans-serif; border-bottom-left-radius: 4px; }
+  .pkg-name { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; margin-bottom: 8px; }
+  .pkg-duration { font-size: 12px; color: var(--red); font-weight: 600; letter-spacing: 1px; margin-bottom: 24px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
+  .pkg-price { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 36px; margin-bottom: 4px; }
+  .pkg-price span { font-size: 18px; color: var(--text-muted); font-weight: 400; }
+  .pkg-old-price { font-family: 'Montserrat', sans-serif; font-size: 16px; color: var(--text-muted); text-decoration: line-through; margin-bottom: 4px; }
+  .pkg-save { display: inline-block; background: rgba(208,2,27,0.12); border: 1px solid rgba(208,2,27,0.4); color: var(--red); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 3px 9px; border-radius: 2px; font-family: 'Montserrat', sans-serif; margin-left: 10px; vertical-align: middle; }
+  .pkg-divider { width: 32px; height: 2px; background: var(--red); margin: 24px 0; }
+  .pkg-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .pkg-list li { font-size: 13px; color: rgba(255,255,255,0.7); display: flex; align-items: flex-start; gap: 8px; }
+  .pkg-list li::before { content: ''; width: 4px; height: 4px; background: var(--red); border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+
+  /* SNACKS */
+  .snacks-section { background: var(--black); }
+  .snacks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .snack-card { background: var(--gray); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px 16px; text-align: center; transition: border-color 0.2s; position: relative; overflow: hidden; }
+  .snack-card:hover { border-color: rgba(208,2,27,0.4); }
+  .snack-card.has-image { padding: 0; }
+  .snack-card.has-image .snack-body { position: relative; z-index: 1; padding: 20px 16px; background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.05) 100%); min-height: 160px; display: flex; flex-direction: column; justify-content: center; }
+  .snack-card.has-image .snack-bg { position: absolute; inset: 0; z-index: 0; }
+  .snack-card.has-image .snack-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .snack-emoji { font-size: 36px; margin-bottom: 10px; }
+  .snack-emoji img { width: 36px; height: 36px; object-fit: contain; display: inline-block; border-radius: 4px; vertical-align: middle; }
+  .snack-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .snack-price { font-size: 15px; font-weight: 700; color: var(--red); font-family: 'Montserrat', sans-serif; }
+  .snack-card.has-image .snack-name { color: #fff; }
+  .snack-card.has-image .snack-price { color: var(--red); text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+
+  /* PAYMENT */
+  .payment-section { background: var(--gray); }
+  .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .card-block { background: var(--black); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 32px; }
+  .card-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .card-value { font-size: 16px; font-weight: 600; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; }
+  .card-number-display { font-size: 22px; font-weight: 700; letter-spacing: 3px; font-family: 'Montserrat', sans-serif; margin-bottom: 6px; }
+  .copy-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 6px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+  .copy-btn:hover { border-color: var(--red); color: white; }
+  .qr-block { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .qr-img { width: 200px; height: 200px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .qr-img img { width: 100%; height: 100%; object-fit: contain; }
+  .qr-placeholder { font-size: 13px; color: #aaa; text-align: center; padding: 16px; }
+
+  /* HOW */
+  .how-section { background: var(--black); }
+  .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+  .how-steps { display: flex; flex-direction: column; gap: 32px; }
+  .how-step { display: flex; gap: 24px; align-items: flex-start; }
+  .how-step-num { width: 40px; height: 40px; border: 1px solid var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; color: var(--red); }
+  .how-step-body h4 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+  .how-step-body p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .how-right { background: var(--gray); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 40px; }
+  .form-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+  .form-input { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 12px 14px; color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif; transition: border-color 0.2s; appearance: none; }
+  .form-input:focus { outline: none; border-color: var(--red); }
+  .form-input::placeholder { color: rgba(255,255,255,0.25); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* BOOKING MODAL */
+  .bk-modal-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 16px; }
+  .bk-modal-overlay.open { display: flex; }
+  .bk-modal { background: var(--gray); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 28px 24px; box-shadow: 0 24px 80px rgba(0,0,0,0.7); }
+  .bk-modal::-webkit-scrollbar { width: 4px; }
+  .bk-modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+  .bk-modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .bk-modal-pkg { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 18px; color: var(--white); }
+  .bk-modal-pkg-meta { font-size: 12px; color: var(--red); font-weight: 600; letter-spacing: 1px; margin-top: 3px; font-family: 'Montserrat', sans-serif; }
+  .bk-modal-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 26px; cursor: pointer; line-height: 1; padding: 0; margin-top: -4px; }
+  .bk-modal-close:hover { color: white; }
+
+  /* BOOKING STEPS */
+  .bk-steps { display: flex; align-items: center; margin-bottom: 4px; }
+  .bk-si { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: rgba(255,255,255,0.35); flex-shrink: 0; transition: all 0.3s; }
+  .bk-si.active { border-color: var(--red); color: var(--white); background: var(--red); }
+  .bk-si.done { border-color: var(--red); color: var(--red); background: rgba(208,2,27,0.12); }
+  .bk-si-line { flex: 1; height: 2px; background: rgba(255,255,255,0.1); margin: 0 6px; transition: background 0.3s; }
+  .bk-si-line.done { background: var(--red); }
+  .bk-step-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 20px; padding: 0 4px; }
+  .bk-step { animation: bkFadeIn 0.25s ease; }
+  @keyframes bkFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* EXTRAS */
+  .extras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 2px; }
+  .extras-grid::-webkit-scrollbar { width: 3px; }
+  .extras-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .extra-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 10px; text-align: center; transition: border-color 0.2s; position: relative; overflow: hidden; }
+  .extra-card.selected { border-color: rgba(208,2,27,0.5); background: rgba(208,2,27,0.06); }
+  .extra-card.has-image { padding: 0; }
+  .extra-card.has-image .snack-bg { position: absolute; inset: 0; z-index: 0; }
+  .extra-card.has-image .snack-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .extra-card.has-image .snack-body { position: relative; z-index: 1; padding: 12px 10px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.05) 100%); min-height: 130px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .extra-emoji { font-size: 28px; margin-bottom: 6px; }
+  .extra-emoji img { width: 36px; height: 36px; object-fit: contain; display: inline-block; border-radius: 4px; vertical-align: middle; }
+  .extra-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
+  .extra-price { font-size: 12px; color: var(--red); font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 8px; }
+  .extra-qty-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .extra-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: none; color: white; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 0; }
+  .extra-btn:hover { border-color: var(--red); color: var(--red); }
+  .extra-qty { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; min-width: 16px; text-align: center; }
+  .extras-total-bar { margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 14px; display: flex; align-items: center; }
+
+  /* BOOKING SUMMARY */
+  .bk-summary-block { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .bk-summary-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--red); text-transform: uppercase; font-family: 'Montserrat', sans-serif; margin-bottom: 10px; }
+  .bk-summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; color: rgba(255,255,255,0.75); }
+  .bk-summary-row span:first-child { color: var(--text-muted); }
+  .bk-summary-total { border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 10px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; color: var(--white); }
+  .bk-success-icon { font-size: 48px; text-align: center; margin: 16px 0 12px; }
+  .bk-success-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 22px; text-align: center; margin-bottom: 10px; }
+  .bk-success-sub { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+  /* FOOTER */
+  footer { background: var(--red-dark, #A80116); padding: 56px 48px 32px; }
+  .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+  .footer-logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: 2px; color: white; margin-bottom: 12px; }
+  .footer-tagline { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 240px; }
+  .footer-col h5 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 2px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 16px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col ul li a { font-size: 13px; color: rgba(255,255,255,0.7); text-decoration: none; transition: color 0.2s; }
+  .footer-col ul li a:hover { color: white; }
+  .footer-bottom { border-top: 1px solid rgba(255,255,255,0.15); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; }
+  .footer-copy { font-size: 12px; color: rgba(255,255,255,0.4); }
+  .footer-addr { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  /* DATE-TIME PICKER */
+  .dt-picker-wrap { position: relative; }
+  #dtPicker { background: #111; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; margin-top: 4px; overflow: hidden; }
+  .dt-cal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .dt-cal-header span { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; }
+  .dt-nav-btn { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 20px; cursor: pointer; padding: 0 6px; line-height: 1; }
+  .dt-nav-btn:hover { color: var(--white); }
+  .dt-cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 8px 2px; gap: 2px; }
+  .dt-cal-dow > div { text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
+  .dt-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 2px 8px 10px; gap: 2px; }
+  .dt-day { text-align: center; padding: 6px 2px; border-radius: 4px; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+  .dt-day:hover { background: rgba(255,255,255,0.08); }
+  .dt-day.past { opacity: 0.25; cursor: default; pointer-events: none; }
+  .dt-day.selected { background: var(--red); color: #fff; font-weight: 700; }
+  .dt-day.empty { pointer-events: none; }
+  .dt-time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 10px; max-height: 200px; overflow-y: auto; }
+  .dt-time-grid::-webkit-scrollbar { width: 3px; }
+  .dt-time-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .dt-time-item { text-align: center; padding: 8px 4px; border-radius: 4px; font-size: 13px; cursor: pointer; color: rgba(255,255,255,0.8); transition: background 0.15s; }
+  .dt-time-item:hover { background: rgba(255,255,255,0.08); }
+  .dt-time-item.selected { background: var(--red); color: #fff; font-weight: 700; }
+  .dt-btn-display { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 12px 14px; color: rgba(255,255,255,0.25); font-size: 14px; font-family: 'Inter', sans-serif; text-align: left; cursor: pointer; transition: border-color 0.2s; }
+  .dt-btn-display:hover, .dt-btn-display.has-value { border-color: rgba(255,255,255,0.3); }
+  .dt-btn-display.has-value { color: var(--white); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-32px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.5; }
+  }
+  @keyframes filmScroll {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-50%); }
+  }
+  @keyframes scanMove {
+    0%   { opacity: 0; transform: scaleX(0.3); }
+    50%  { opacity: 0.5; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(0.3); }
+  }
+
+  body.animations-ready .hero-badge     { animation: fadeIn   0.5s ease both; animation-delay: 0.1s; }
+  body.animations-ready .hero-title     { animation: fadeUp   0.7s ease both; animation-delay: 0.25s; }
+  body.animations-ready .hero-sub       { animation: fadeUp   0.7s ease both; animation-delay: 0.4s; }
+  body.animations-ready .hero-desc      { animation: fadeUp   0.7s ease both; animation-delay: 0.55s; }
+  body.animations-ready .hero-cta       { animation: fadeUp   0.7s ease both; animation-delay: 0.7s; }
+  body.animations-ready .hero-film-strip { animation: fadeIn  1s ease both; animation-delay: 0.8s; }
+  body.animations-ready .film-hole      { animation: pulseDot 3s ease-in-out infinite; }
+  body.animations-ready .film-hole:nth-child(2n) { animation-delay: 0.4s; }
+  body.animations-ready .film-hole:nth-child(3n) { animation-delay: 0.8s; }
+  body.animations-ready .film-hole:nth-child(4n) { animation-delay: 1.2s; }
+  body.animations-ready .scanline       { animation: scanMove 4s ease-in-out infinite; }
+
+  /* Scroll-reveal */
+  .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s ease, transform 0.65s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left { opacity: 0; transform: translateX(-32px); transition: opacity 0.65s ease, transform 0.65s ease; }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+  .room-card { transition: border-color 0.25s, transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s; }
+  .room-card:hover { border-color: var(--red); transform: translateY(-6px); box-shadow: 0 16px 40px rgba(208,2,27,0.18); }
+
+  .step { transition: background 0.3s, transform 0.3s; }
+  .step:hover { background: #111; transform: translateY(-3px); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a1a; border: 1px solid rgba(255,255,255,0.15); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 999; transition: transform 0.3s; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* CHAT WIDGET */
+  #chatWidget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+  #chatToggleBtn { width: 56px; height: 56px; border-radius: 50%; background: var(--red); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 24px rgba(208,2,27,0.5); transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
+  #chatToggleBtn:hover { background: var(--red-dark); transform: scale(1.08); }
+  #chatWindow { display: none; flex-direction: column; width: 320px; height: 440px; background: var(--gray); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.7); }
+  #chatWindow.open { display: flex; }
+  .chat-header { background: var(--red); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .chat-header-info { display: flex; flex-direction: column; }
+  .chat-header-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; color: white; }
+  .chat-header-sub { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+  .chat-close-btn { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 22px; cursor: pointer; line-height: 1; padding: 0 2px; }
+  .chat-close-btn:hover { color: white; }
+  #chatNameForm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 24px; gap: 14px; }
+  .chat-welcome-icon { font-size: 38px; }
+  .chat-welcome-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; color: var(--white); text-align: center; }
+  .chat-welcome-sub { font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+  #chatNameInput { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 11px 14px; color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+  #chatNameInput:focus { outline: none; border-color: var(--red); }
+  #chatNameInput::placeholder { color: rgba(255,255,255,0.25); }
+  .chat-phone-row { display: flex; gap: 8px; width: 100%; }
+  #chatPhoneCode { width: 64px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 11px 10px; color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif; text-align: center; flex-shrink: 0; }
+  #chatPhoneCode:focus { outline: none; border-color: var(--red); }
+  #chatPhoneNumber { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 11px 14px; color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif; min-width: 0; transition: border-color 0.2s; }
+  #chatPhoneNumber:focus { outline: none; border-color: var(--red); }
+  #chatPhoneNumber::placeholder { color: rgba(255,255,255,0.25); }
+  #chatStartBtn { width: 100%; background: var(--red); color: white; border: none; border-radius: 8px; padding: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: background 0.2s; text-transform: uppercase; }
+  #chatStartBtn:hover { background: var(--red-dark); }
+  #chatMessages { flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+  #chatMessages::-webkit-scrollbar { width: 3px; }
+  #chatMessages::-webkit-scrollbar-track { background: transparent; }
+  #chatMessages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .chat-msg { max-width: 82%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; word-break: break-word; }
+  .chat-msg.self { align-self: flex-end; background: var(--red); color: white; border-bottom-right-radius: 3px; }
+  .chat-msg.operator { align-self: flex-start; background: rgba(255,255,255,0.09); color: var(--white); border-bottom-left-radius: 3px; }
+  .chat-msg.system { align-self: center; background: transparent; color: var(--text-muted); font-size: 11px; padding: 2px 8px; }
+  .chat-msg-name { font-size: 10px; font-weight: 700; opacity: 0.65; margin-bottom: 3px; }
+  #chatInputArea { display: none; gap: 8px; padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; align-items: center; }
+  #chatInput { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 9px 14px; color: var(--white); font-size: 13px; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+  #chatInput:focus { outline: none; border-color: var(--red); }
+  #chatInput::placeholder { color: rgba(255,255,255,0.25); }
+  #chatSendBtn { width: 36px; height: 36px; border-radius: 50%; background: var(--red); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+  #chatSendBtn:hover { background: var(--red-dark); }
+  #chatSendBtn:disabled { background: rgba(255,255,255,0.1); cursor: default; }
+
+  /* TG CALLBACK BUTTON */
+  #tgCallBtn { width: 56px; height: 56px; border-radius: 50%; background: #29a8e8; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 12px rgba(0,0,0,0.4); transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
+  #tgCallBtn:hover { transform: scale(1.08); background: #1a8fc8; }
+  #tgCallPopup { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; width: 220px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: none; flex-direction: column; gap: 10px; }
+  #tgCallPopup.open { display: flex; }
+  .tg-popup-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: var(--white); }
+  .tg-popup-sub { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  #tgCallPhone { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: var(--white); font-size: 13px; font-family: 'Inter', sans-serif; width: 100%; transition: border-color 0.2s; }
+  #tgCallPhone:focus { outline: none; border-color: #29a8e8; }
+  #tgCallPhone::placeholder { color: rgba(255,255,255,0.25); }
+  #tgCallSendBtn { background: #29a8e8; color: white; border: none; border-radius: 8px; padding: 9px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; transition: background 0.2s; }
+  #tgCallSendBtn:hover { background: #1a8fc8; }
+  #tgCallDone { font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; display: none; padding: 4px 0; }
+
+  /* ─── Валидация телефона ──────────────────────────────────────────────── */
+  .input-error { border-color: var(--red) !important; box-shadow: 0 0 0 2px rgba(230, 33, 23, 0.25) !important; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  .shake { animation: shake 0.4s ease; }
+
+  /* HAMBURGER & MOBILE MENU */
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 32px; height: 32px; background: none; border: none; padding: 4px; cursor: pointer; }
+  .nav-hamburger span { display: block; height: 2px; background: rgba(255,255,255,0.8); border-radius: 1px; transition: transform 0.25s, opacity 0.25s; }
+  .nav-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 4px); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .nav-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -4px); }
+  .mobile-menu { position: fixed; top: 64px; left: 0; right: 0; z-index: 99; background: rgba(10,10,10,0.97); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); display: none; flex-direction: column; padding: 8px 20px 20px; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.8); text-decoration: none; padding: 14px 0; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); transition: color 0.2s; }
+  .mobile-menu a:last-child { border-bottom: none; }
+  .mobile-menu a:hover, .mobile-menu a:active { color: var(--white); }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .nav-hamburger { display: flex; }
+
+    .hero { padding: 80px 20px 56px; min-height: 85vh; }
+    .hero-film-strip { display: none; }
+    .hero-desc { font-size: 14px; }
+    .hero-cta { display: flex; flex-direction: column; gap: 12px; }
+    .hero-cta .btn-primary, .hero-cta .btn-ghost { width: 100%; text-align: center; }
+
+    section { padding: 64px 20px; }
+
+    .steps-grid { grid-template-columns: 1fr; }
+    .step { padding: 28px 24px; }
+
+    .packages-grid { grid-template-columns: 1fr; }
+
+    .snacks-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+
+    .how-grid { grid-template-columns: 1fr; gap: 32px; }
+    .how-right { padding: 24px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+
+    footer { padding: 48px 20px 24px; }
+    .footer-top { grid-template-columns: 1fr; gap: 28px; }
+    .footer-bottom { flex-direction: column; gap: 6px; }
+
+    #chatWindow { width: calc(100vw - 48px); max-width: 320px; }
+    #chatWidget { bottom: 16px; right: 16px; }
+    #tgCallPopup { width: min(220px, calc(100vw - 80px)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- CITY MODAL -->
+<div class="city-modal-overlay" id="cityModal">
+  <div class="city-modal">
+    <div class="city-modal-dot"></div>
+    <h3>Выберите город</h3>
+    <div class="city-modal-sub">Для отображения актуальной информации</div>
+    <div class="city-search-wrap">
+      <span class="city-search-icon">🔍</span>
+      <input class="city-search" id="citySearch" type="text" placeholder="Поиск города..." oninput="filterCities(this.value)" autocomplete="off">
+    </div>
+    <div class="city-list" id="cityList"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CHAT WIDGET -->
+<div id="chatWidget">
+  <div id="chatWindow">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-header-title">Техподдержка</div>
+        <div class="chat-header-sub">Онлайн · Ответим быстро</div>
+      </div>
+      <button class="chat-close-btn" onclick="toggleChat()" aria-label="Закрыть">&times;</button>
+    </div>
+    <div id="chatNameForm">
+      <div class="chat-welcome-icon">🎬</div>
+      <div class="chat-welcome-title">Нужна помощь?</div>
+      <div class="chat-welcome-sub">Введите имя — и оператор ответит в Telegram прямо сейчас</div>
+      <input id="chatNameInput" type="text" placeholder="Ваше имя" maxlength="50" autocomplete="off">
+      <div class="chat-phone-row">
+        <input id="chatPhoneCode" type="text" value="+7" maxlength="4" autocomplete="off" readonly>
+        <input id="chatPhoneNumber" type="tel" placeholder="(9__) ___-__-__" maxlength="15" value="9" oninput="formatChatPhone(this)" autocomplete="tel">
+      </div>
+      <button id="chatStartBtn" onclick="startChat()">Начать чат</button>
+    </div>
+    <div id="chatMessages"></div>
+    <div id="chatInputArea">
+      <input id="chatInput" type="text" placeholder="Напишите сообщение..." maxlength="2000" autocomplete="off">
+      <button id="chatSendBtn" onclick="sendChatMessage()" aria-label="Отправить">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- TG CALLBACK -->
+  <div id="tgCallPopup">
+    <div class="tg-popup-title">Заказать звонок</div>
+    <div class="tg-popup-sub">Мы напишем вам в Telegram</div>
+    <input id="tgCallPhone" type="tel" placeholder="+7 000 000-00-00" maxlength="20" autocomplete="tel">
+    <button id="tgCallSendBtn" onclick="submitCallback()">Отправить запрос</button>
+    <div id="tgCallDone">Запрос отправлен! Ждите ответа.</div>
+  </div>
+  <button id="tgCallBtn" onclick="toggleTgCallback()" aria-label="Запросить звонок в Telegram">
+    <svg width="28" height="28" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M98 170l-5 52s7 0 10-3l24-22 50 37c9 5 15 2 17-8L221 28c3-13-5-19-14-15L12 96c-13 5-13 12-2 15l49 15 113-71c5-3 10-1 6 2L98 170z" fill="white"/>
+    </svg>
+  </button>
+  <button id="chatToggleBtn" onclick="toggleChat()" aria-label="Открыть чат">
+    <svg id="chatIconOpen" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg id="chatIconClose" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">АНТИ<span>КИНО</span></a>
+  <ul class="nav-links">
+    <li><a href="#rooms">Залы</a></li>
+    <li><a href="#packages">Пакеты</a></li>
+    <li><a href="snacks.html">Допы</a></li>
+    <li><a href="#booking">Забронировать</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Открыть меню">
+      <span></span><span></span><span></span>
+    </button>
+    <button class="nav-city" onclick="openCityModal()">
+      <span class="nav-city-dot"></span>
+      <span id="currentCityLabel">Выбери город</span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#rooms" onclick="closeMobileMenu()">Залы</a>
+  <a href="#packages" onclick="closeMobileMenu()">Пакеты</a>
+  <a href="snacks.html">Допы</a>
+  <a href="#booking" onclick="closeMobileMenu()">Забронировать</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">VIP-ФОРМАТ</div>
+    <div class="hero-title">АНТИ<span class="accent">КИНО</span></div>
+    <div class="hero-sub">Частный кинозал</div>
+    <p class="hero-desc">Забронируй зал только для себя. Никаких посторонних — только ты, твои люди, большой экран и атмосфера, которую ты сам создаёшь.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('packages').scrollIntoView({behavior:'smooth'})">ВЫБРАТЬ ПАКЕТ</button>
+      <button class="btn-ghost" onclick="document.getElementById('rooms').scrollIntoView({behavior:'smooth'})">Посмотреть залы</button>
+    </div>
+  </div>
+  <div class="hero-film-strip">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+</section>
+
+<div class="scanline"></div>
+
+<!-- FEATURES -->
+<section class="steps-section reveal" id="features">
+  <div class="section-label">Почему мы</div>
+  <div class="section-title">Полная свобода — внутри зала</div>
+  <div class="steps-grid">
+    <div class="step"><div class="step-num">01</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="step-name">Экран во всю стену</div><div class="step-text">Проектор и звуковая система кинотеатрального уровня. Кино, сериалы, спорт — что хочешь.</div></div>
+    <div class="step"><div class="step-num">02</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="step-name">Своя музыка</div><div class="step-text">Подключи телефон, запусти любой плейлист. Зал полностью под тебя.</div></div>
+    <div class="step"><div class="step-num">03</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="step-name">Только свои</div><div class="step-text">Зал арендуется целиком. Свидание, день рождения, мальчишник — только ваша компания.</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="step-name">Романтика на высший балл</div><div class="step-text">Декор, свечи, вино — принеси своё или закажи у нас. Создадим нужную атмосферу.</div></div>
+    <div class="step"><div class="step-num">05</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="step-name">Для бизнеса тоже</div><div class="step-text">Подключи ноутбук, проведи презентацию в нестандартной обстановке.</div></div>
+    <div class="step"><div class="step-num">06</div><div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="step-name">Круглосуточно</div><div class="step-text">Ночью или утром — мы открыты. Бронируй удобное время без ограничений.</div></div>
+  </div>
+</section>
+
+<!-- ROOMS -->
+<section class="rooms-section reveal" id="rooms">
+  <div class="section-label">Наши залы</div>
+  <div class="section-title">Выбери свою атмосферу</div>
+  <div class="rooms-slider" id="roomsSlider">
+    <div class="rooms-track" id="roomsTrack">
+      <div style="padding:40px;text-align:center;color:var(--text-muted);">Загрузка...</div>
+    </div>
+    <button class="room-arrow room-arrow-prev" onclick="prevRoom()" aria-label="Предыдущий">‹</button>
+    <button class="room-arrow room-arrow-next" onclick="nextRoom()" aria-label="Следующий">›</button>
+  </div>
+  <div class="rooms-nav">
+    <div class="room-dots" id="roomDots"></div>
+    <a href="rooms.html" class="rooms-all-link">Все залы →</a>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section class="packages-section reveal" id="packages">
+  <div class="section-label">Пакеты</div>
+  <div class="section-title">Романтические предложения и не только</div>
+  <p class="section-desc">Готовые пакеты для любого случая. Или сформируй своё — мы гибкие.</p>
+  <div class="packages-grid" id="packagesGrid">
+    <div style="color:var(--text-muted);font-size:14px;">Загрузка...</div>
+  </div>
+</section>
+
+
+
+<!-- HOW / BOOKING -->
+<section class="how-section reveal" id="booking">
+  <div class="section-label">Как это работает</div>
+  <div class="section-title" style="margin-bottom:12px">Просто, быстро,<br>без лишних шагов</div>
+  <p class="section-desc">Выбери пакет выше и нажми «Забронировать» — форма откроется прямо там.</p>
+  <div class="how-steps">
+    <div class="how-step"><div class="how-step-num">1</div><div class="how-step-body"><h4>Выбери пакет и дату</h4><p>Нажми «Забронировать» на нужном тарифе, заполни контакты.</p></div></div>
+    <div class="how-step"><div class="how-step-num">2</div><div class="how-step-body"><h4>Добавь допы</h4><p>Попкорн, напитки, снеки — выбери что привезти к началу сеанса.</p></div></div>
+    <div class="how-step"><div class="how-step-num">3</div><div class="how-step-body"><h4>Получи подтверждение</h4><p>Мы свяжемся в течение 15 минут — подтвердим и пришлём детали.</p></div></div>
+  </div>
+</section>
+
+<!-- PAYMENT CHOICE MODAL -->
+<div id="paymentChoiceOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--gray);border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:100%;max-width:440px;padding:32px 28px;box-shadow:0 24px 80px rgba(0,0,0,0.75);">
+    <div style="font-family:'Montserrat',sans-serif;font-weight:900;font-size:20px;color:var(--white);margin-bottom:8px;text-align:center;">Как оформить бронь?</div>
+    <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:28px;line-height:1.5;">Выбери удобный способ</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="chooseSupport()" style="background:var(--red);color:white;border:none;padding:18px 20px;border-radius:8px;cursor:pointer;text-align:left;transition:background 0.2s;width:100%;" onmouseover="this.style.background='var(--red-dark)'" onmouseout="this.style.background='var(--red)'">
+        <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;margin-bottom:4px;">💬 Через тех поддержку</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.75);">Оформим вместе — оператор ответит в чате</div>
+      </button>
+      <button onclick="choosePayment()" style="background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(255,255,255,0.15);padding:18px 20px;border-radius:8px;cursor:pointer;text-align:left;transition:all 0.2s;width:100%;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+        <div style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;margin-bottom:4px;">💳 Оплатить онлайн</div>
+        <div style="font-size:12px;color:var(--text-muted);">Быстрая оплата через платёжную систему</div>
+      </button>
+    </div>
+    <button onclick="closePaymentChoice()" style="width:100%;margin-top:14px;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;padding:8px;">Отмена</button>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="bk-modal-overlay" onclick="if(event.target===this)closeBookingModal()">
+  <div class="bk-modal">
+    <div class="bk-modal-header">
+      <div>
+        <div class="bk-modal-pkg" id="modalPkgName"></div>
+        <div class="bk-modal-pkg-meta" id="modalPkgMeta"></div>
+      </div>
+      <button class="bk-modal-close" onclick="closeBookingModal()">×</button>
+    </div>
+
+    <div class="bk-steps">
+      <div class="bk-si active" id="bsi1"><span>1</span></div>
+      <div class="bk-si-line" id="bsiL1"></div>
+      <div class="bk-si" id="bsi2"><span>2</span></div>
+      <div class="bk-si-line" id="bsiL2"></div>
+      <div class="bk-si" id="bsi3"><span>3</span></div>
+    </div>
+    <div class="bk-step-labels"><span>Детали</span><span>Допы</span><span>Итог</span></div>
+
+    <!-- Шаг 1 -->
+    <div id="bStep1" class="bk-step">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Ваше имя</label><input class="form-input" id="bName" type="text" placeholder="Александр" autocomplete="name"></div>
+        <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="bPhone" type="tel" placeholder="+7 (___) ___-__-__" maxlength="18" oninput="formatRuPhone(this)" autocomplete="tel"></div>
+      </div>
+      <input type="hidden" id="bDate">
+      <input type="hidden" id="bTime">
+      <div class="form-group dt-picker-wrap">
+        <label class="form-label">Дата и время</label>
+        <button type="button" class="dt-btn-display" id="dtPickerBtn" onclick="toggleDtPicker();event.stopPropagation()">Выбрать дату и время</button>
+        <div id="dtPicker" style="display:none" onclick="event.stopPropagation()"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Комментарий</label><textarea class="form-input" id="bComment" rows="2" placeholder="Повод, пожелания, количество гостей..."></textarea></div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="bkGoStep(2)">Далее — выбрать допы →</button>
+    </div>
+
+    <!-- Шаг 2 -->
+    <div id="bStep2" class="bk-step" style="display:none">
+      <div id="extrasGrid" class="extras-grid"></div>
+      <div class="extras-total-bar">
+        Допы: <strong id="extrasTotalPrice">0 ₽</strong>
+        <span style="color:var(--text-muted);font-size:12px;margin-left:6px">(можно пропустить)</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(1)">← Назад</button>
+        <button class="btn-primary" style="flex:2;padding:12px" onclick="bkGoStep(3)">Перейти к итогу →</button>
+      </div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div id="bStep3" class="bk-step" style="display:none">
+      <div id="bkSummary"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(2)">← Назад</button>
+        <button class="btn-primary" style="flex:2;padding:12px" id="bkSubmitBtn" onclick="submitBooking()">ОТПРАВИТЬ ЗАЯВКУ</button>
+      </div>
+    </div>
+
+    <!-- Успех -->
+    <div id="bkSuccess" class="bk-step" style="display:none">
+      <div class="bk-success-icon">🎬</div>
+      <div class="bk-success-title">Заявка отправлена!</div>
+      <div class="bk-success-sub">Свяжемся с тобой в течение 15 минут для подтверждения.</div>
+      <button class="btn-primary" style="width:100%;padding:12px;margin-top:20px" onclick="bkReset()">Новая заявка</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">АНТИКИНО</div>
+      <div class="footer-tagline">Частный кинотеатр VIP-формата. Работаем круглосуточно — для тебя и твоих.</div>
+      <div style="margin-top: 16px; font-size:13px; color: rgba(255,255,255,0.5);" id="footerAddress"></div>
+    </div>
+    <div class="footer-col"><h5>О нас</h5><ul><li><a href="#rooms">Наши залы</a></li><li><a href="#">Отзывы</a></li><li><a href="#">Команда</a></li></ul></div>
+    <div class="footer-col"><h5>Сервисы</h5><ul><li><a href="#packages">Все пакеты</a></li><li><a href="snacks.html">Допы и снеки</a></li><li><a href="#">Подарочный сертификат</a></li><li><a href="#">Для бизнеса</a></li></ul></div>
+    <div class="footer-col"><h5>Контакты</h5><ul><li><a href="#">+7 (999) 000-00-00</a></li><li><a href="#">Telegram</a></li><li><a href="#">WhatsApp</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 АнтиКино. Информация не является публичной офертой.</div>
+    <div class="footer-addr">Круглосуточно · Принимаем карты</div>
+  </div>
+</footer>
+
+<script>
+  // ─── Загрузка данных с сервера ────────────────────────────────────────────
+  let siteData = {};
+
+  function renderAll() {
+    renderRooms();
+    renderPackages();
+    renderCities();
+  }
+
+  // ─── Залы (слайдер) ──────────────────────────────────────────────────────
+  const _ROOM_PH = ['c1','c2','c3','cx'];
+  const _ROOMS_PREVIEW = 3;
+  let currentRoom = 0;
+  let roomsData = [];
+
+  function _roomCardHTML(r, i) {
+    const cls = _ROOM_PH[i % _ROOM_PH.length];
+    const photo = r.photo
+      ? `<img src="${r.photo}" alt="${r.name}" loading="lazy">`
+      : `<div class="room-photo-placeholder ${cls}">${r.name[0]}</div>`;
+    const features = (r.features || []).map(f => `<span class="feature-pill">${f}</span>`).join('');
+    return `<div class="room-card">
+      <div class="room-photo">${photo}</div>
+      <div class="room-body">
+        <div class="room-tag">${r.tag || ''}</div>
+        <div class="room-name">${r.name}</div>
+        <div class="room-features">${features}</div>
+      </div>
+    </div>`;
+  }
+
+  function renderRooms() {
+    const rooms = siteData.rooms || [];
+    const track = document.getElementById('roomsTrack');
+    const dots = document.getElementById('roomDots');
+    if (!track) return;
+
+    if (rooms.length === 0) {
+      track.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Залы скоро появятся</div>';
+      if (dots) dots.innerHTML = '';
+      return;
+    }
+
+    const showRooms = rooms.slice(0, _ROOMS_PREVIEW);
+    roomsData = showRooms;
+    track.innerHTML = showRooms.map((r, i) =>
+      `<div class="room-slide">${_roomCardHTML(r, i)}</div>`
+    ).join('');
+
+    if (dots) {
+      dots.innerHTML = showRooms.map((_, i) =>
+        `<span class="room-dot${i === 0 ? ' active' : ''}" onclick="goToRoom(${i})"></span>`
+      ).join('');
+    }
+
+    currentRoom = 0;
+    updateRoomSlider();
+
+  }
+
+  function updateRoomSlider() {
+    const track = document.getElementById('roomsTrack');
+    const allDots = document.querySelectorAll('.room-dot');
+    const prevBtn = document.querySelector('.room-arrow-prev');
+    const nextBtn = document.querySelector('.room-arrow-next');
+    if (track) track.style.transform = `translateX(-${currentRoom * 100}%)`;
+    allDots.forEach((d, i) => d.classList.toggle('active', i === currentRoom));
+    if (prevBtn) prevBtn.style.cssText = `opacity: ${currentRoom === 0 ? 0 : 1}; pointer-events: ${currentRoom === 0 ? 'none' : 'auto'};`;
+    if (nextBtn) nextBtn.style.cssText = `opacity: ${currentRoom >= roomsData.length - 1 ? 0 : 1}; pointer-events: ${currentRoom >= roomsData.length - 1 ? 'none' : 'auto'};`;
+  }
+
+  function nextRoom() {
+    if (currentRoom < roomsData.length - 1) { currentRoom++; updateRoomSlider(); }
+  }
+
+  function prevRoom() {
+    if (currentRoom > 0) { currentRoom--; updateRoomSlider(); }
+  }
+
+  function goToRoom(i) {
+    currentRoom = i;
+    updateRoomSlider();
+  }
+
+  // ─── Тарифы ──────────────────────────────────────────────────────────────
+  function renderPackages() {
+    const pkgs = siteData.packages || [];
+    const grid = document.getElementById('packagesGrid');
+    if (!grid) return;
+    if (pkgs.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:14px;">Тарифы скоро появятся</p>';
+      return;
+    }
+    grid.innerHTML = pkgs.map(p => {
+      const save = p.oldPrice && p.oldPrice > p.price ? p.oldPrice - p.price : null;
+      const priceBlock = p.oldPrice
+        ? `<div class="pkg-old-price">${p.oldPrice.toLocaleString('ru-RU')} ₽</div>
+           <div class="pkg-price">${p.price.toLocaleString('ru-RU')} <span>₽</span>${save ? `<span class="pkg-save">−${save.toLocaleString('ru-RU')}₽</span>` : ''}</div>`
+        : `<div class="pkg-price">${p.price.toLocaleString('ru-RU')} <span>₽</span></div>`;
+      return `
+        <div class="pkg-card${p.featured ? ' featured' : ''}">
+          ${p.badge ? `<div class="pkg-badge">${p.badge}</div>` : ''}
+          <div class="pkg-name">${p.name}</div>
+          <div class="pkg-duration">${p.duration}</div>
+          ${priceBlock}
+          <div class="pkg-divider"></div>
+          <ul class="pkg-list">${p.features.map(f => `<li>${f}</li>`).join('')}</ul>
+          <button class="btn-primary" style="width:100%;padding:13px;margin-top:auto" onclick="openBookingModal('${p.name}','${p.duration} · ${p.price.toLocaleString('ru-RU')} ₽',${p.price})">ЗАБРОНИРОВАТЬ</button>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── Заглушки удалённых секций ───────────────────────────────────────────
+  function renderCard() {}
+  function renderQR() {}
+  function copyCard() {}
+  function renderSnacks() {}
+  function injectJivo() {}
+
+  // ─── Бронирование: модалка ───────────────────────────────────────────────
+  const bkData = {};
+  const extrasQty = {};
+  let bkCurrentStep = 1;
+
+  function openBookingModal(pkgName, pkgMeta, pkgPrice) {
+    bkData.package = pkgName;
+    bkData.price = pkgPrice || 0;
+    document.getElementById('modalPkgName').textContent = pkgName;
+    document.getElementById('modalPkgMeta').textContent = pkgMeta;
+    document.getElementById('bookingModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    bkGoStep(1);
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookingModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function bkGoStep(step) {
+    if (step === 2 && bkCurrentStep === 1) {
+      const name = document.getElementById('bName')?.value.trim();
+      const phone = document.getElementById('bPhone')?.value.trim();
+      if (!name) { showToast('Введи имя'); return; }
+      if (!validatePhone('bPhone')) { showToast('Неправильно набран номер'); return; }
+      bkData.name    = name;
+      bkData.phone   = phone;
+      bkData.date    = document.getElementById('bDate')?.value || '';
+      bkData.time    = document.getElementById('bTime')?.value || '';
+      bkData.comment = document.getElementById('bComment')?.value || '';
+      renderExtrasGrid();
+    }
+    if (step === 3) renderBookingSummary();
+
+    ['bStep1','bStep2','bStep3','bkSuccess'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const show = document.getElementById('bStep' + step) || document.getElementById('bkSuccess');
+    if (show) show.style.display = 'block';
+
+    [1,2,3].forEach(i => {
+      const si = document.getElementById('bsi' + i);
+      const ln = document.getElementById('bsiL' + i);
+      if (si) {
+        si.classList.toggle('active', i === step);
+        si.classList.toggle('done', i < step);
+      }
+      if (ln) ln.classList.toggle('done', i < step);
+    });
+    bkCurrentStep = step;
+  }
+
+  function renderExtrasGrid() {
+    const snacks = siteData.snacks || [];
+    const grid = document.getElementById('extrasGrid');
+    if (!grid) return;
+    if (snacks.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0">Допы пока не добавлены</p>';
+      return;
+    }
+    grid.innerHTML = snacks.map(s => {
+      const visual = s.thumb ? `<img src="${s.thumb}" alt="${s.name}">` : (s.emoji || '🍿');
+      const hasImg = s.image || s.thumb;
+      return `
+      <div class="extra-card${(extrasQty[s.id]||0)>0?' selected':''}${hasImg ? ' has-image' : ''}" id="ecard_${s.id}">
+        ${s.image ? `<div class="snack-bg"><img src="${s.image}" alt="${s.name}"></div>` : ''}
+        <div class="snack-body">
+          <div class="extra-emoji">${visual}</div>
+          <div class="extra-name">${s.name}</div>
+          <div class="extra-price">${s.price.toLocaleString('ru-RU')} ₽</div>
+          <div class="extra-qty-row">
+            <button class="extra-btn" onclick="changeQty('${s.id}',-1)">−</button>
+            <span class="extra-qty" id="qty_${s.id}">${extrasQty[s.id]||0}</span>
+            <button class="extra-btn" onclick="changeQty('${s.id}',1)">+</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    updateExtrasTotal();
+  }
+
+  function changeQty(id, delta) {
+    extrasQty[id] = Math.max(0, (extrasQty[id] || 0) + delta);
+    const qEl = document.getElementById('qty_' + id);
+    if (qEl) qEl.textContent = extrasQty[id];
+    const card = document.getElementById('ecard_' + id);
+    if (card) card.classList.toggle('selected', extrasQty[id] > 0);
+    updateExtrasTotal();
+  }
+
+  function updateExtrasTotal() {
+    const snacks = siteData.snacks || [];
+    const total = snacks.reduce((s, x) => s + (extrasQty[x.id]||0) * x.price, 0);
+    const el = document.getElementById('extrasTotalPrice');
+    if (el) el.textContent = total.toLocaleString('ru-RU') + ' ₽';
+  }
+
+  function renderBookingSummary() {
+    const snacks = siteData.snacks || [];
+    const selected = snacks.filter(s => (extrasQty[s.id]||0) > 0);
+    const extrasTotal = selected.reduce((s, x) => s + extrasQty[x.id] * x.price, 0);
+    const el = document.getElementById('bkSummary');
+    if (!el) return;
+
+    const detailRows = [
+      bkData.package && ['Тариф', bkData.package],
+      ['Имя', bkData.name],
+      ['Телефон', bkData.phone],
+      bkData.date    && ['Дата', bkData.date],
+      bkData.time    && ['Время', bkData.time],
+      bkData.comment && ['Комментарий', bkData.comment],
+    ].filter(Boolean).map(([k,v]) =>
+      `<div class="bk-summary-row"><span>${k}</span><span>${v}</span></div>`
+    ).join('');
+
+    const extrasRows = selected.map(s =>
+      `<div class="bk-summary-row"><span>${s.emoji} ${s.name} × ${extrasQty[s.id]}</span><span>${(s.price*extrasQty[s.id]).toLocaleString('ru-RU')} ₽</span></div>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="bk-summary-block">
+        <div class="bk-summary-label">Детали брони</div>
+        ${detailRows}
+      </div>
+      ${selected.length > 0 ? `
+      <div class="bk-summary-block">
+        <div class="bk-summary-label">Допы</div>
+        ${extrasRows}
+        <div class="bk-summary-row bk-summary-total"><span>Итого допы</span><span>${extrasTotal.toLocaleString('ru-RU')} ₽</span></div>
+      </div>` : ''}`;
+  }
+
+  function submitBooking() {
+    showPaymentChoice();
+  }
+
+  function showPaymentChoice() {
+    const overlay = document.getElementById('paymentChoiceOverlay');
+    overlay.style.display = 'flex';
+  }
+
+  function closePaymentChoice() {
+    document.getElementById('paymentChoiceOverlay').style.display = 'none';
+  }
+
+  async function submitBookingToServer() {
+    const snacks = siteData.snacks || [];
+    const extras = snacks
+      .filter(s => (extrasQty[s.id]||0) > 0)
+      .map(s => ({ name: s.name, emoji: s.emoji, price: s.price, qty: extrasQty[s.id] }));
+    try {
+      await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...bkData, extras })
+      });
+    } catch(e) {}
+  }
+
+  function showBookingSuccess() {
+    ['bStep1','bStep2','bStep3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const ok = document.getElementById('bkSuccess');
+    if (ok) ok.style.display = 'block';
+    [1,2,3].forEach(i => {
+      document.getElementById('bsi'+i)?.classList.add('done');
+      document.getElementById('bsi'+i)?.classList.remove('active');
+    });
+  }
+
+  async function choosePayment() {
+    closePaymentChoice();
+    const snacks = siteData.snacks || [];
+    const extrasTotal = snacks.reduce((s, x) => s + (extrasQty[x.id]||0) * x.price, 0);
+    const totalAmount = (bkData.price || 0) + extrasTotal;
+    await submitBookingToServer();
+    window.open('/payment?amount=' + totalAmount, '_blank');
+    showBookingSuccess();
+  }
+
+  async function chooseSupport() {
+    closePaymentChoice();
+    await submitBookingToServer();
+    openChatWithBookingInfo();
+    showBookingSuccess();
+  }
+
+  function buildBookingSummaryText() {
+    const snacks = siteData.snacks || [];
+    const selected = snacks.filter(s => (extrasQty[s.id]||0) > 0);
+    const extrasTotal = selected.reduce((sum, x) => sum + extrasQty[x.id] * x.price, 0);
+    const pkgPrice = bkData.price || 0;
+    const grandTotal = pkgPrice + extrasTotal;
+    let text = 'Привет! Хочу оформить бронь:\n';
+    if (bkData.package) text += `Тариф: ${bkData.package} — ${pkgPrice.toLocaleString('ru-RU')} ₽\n`;
+    if (bkData.date)    text += `Дата: ${bkData.date}\n`;
+    if (bkData.time)    text += `Время: ${bkData.time}\n`;
+    if (bkData.comment) text += `Комментарий: ${bkData.comment}\n`;
+    if (selected.length > 0)
+      text += `Допы: ${selected.map(s => `${s.emoji} ${s.name} × ${extrasQty[s.id]} (${(s.price*extrasQty[s.id]).toLocaleString('ru-RU')} ₽)`).join(', ')}\n`;
+    text += `\nИТОГО: ${grandTotal.toLocaleString('ru-RU')} ₽`;
+    return text.trim();
+  }
+
+  function openChatWithBookingInfo() {
+    const nameInput = document.getElementById('chatNameInput');
+    const phoneInput = document.getElementById('chatPhoneNumber');
+    if (nameInput) nameInput.value = bkData.name || '';
+    if (phoneInput) phoneInput.value = bkData.phone ? bkData.phone.replace(/^\+7\s*/, '') : '9';
+    window._pendingBookingMessage = buildBookingSummaryText();
+    if (!chatIsOpen) toggleChat();
+    setTimeout(startChat, 150);
+  }
+
+  function bkReset() {
+    Object.keys(extrasQty).forEach(k => delete extrasQty[k]);
+    Object.keys(bkData).forEach(k => delete bkData[k]);
+    ['bName','bPhone','bComment'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    const date=document.getElementById('bDate'); if(date) date.value='';
+    const time=document.getElementById('bTime'); if(time) time.value='';
+    const btn=document.getElementById('bkSubmitBtn');
+    if(btn){ btn.disabled=false; btn.textContent='ОТПРАВИТЬ ЗАЯВКУ'; }
+    bkGoStep(1);
+  }
+
+  // ─── Снеки ───────────────────────────────────────────────────────────────
+  function renderSnacks() {
+    const snacks = siteData.snacks || [];
+    const grid = document.getElementById('snacksGrid');
+    if (snacks.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:14px;">Снеки скоро появятся</p>';
+      return;
+    }
+    grid.innerHTML = snacks.map(s => {
+      const visual = s.thumb ? `<img src="${s.thumb}" alt="${s.name}">` : (s.emoji || '🍿');
+      const hasImg = s.image || s.thumb;
+      return `
+      <div class="snack-card${hasImg ? ' has-image' : ''}">
+        ${s.image ? `<div class="snack-bg"><img src="${s.image}" alt="${s.name}"></div>` : ''}
+        <div class="snack-body">
+          <div class="snack-emoji">${visual}</div>
+          <div class="snack-name">${s.name}</div>
+          <div class="snack-price">${s.price.toLocaleString('ru-RU')} ₽</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─── Города ──────────────────────────────────────────────────────────────
+  let selectedCity = null;
+  let cityChosen = false;
+
+  function renderCities(filter = '') {
+    const cities = siteData.cities || [];
+    const list = document.getElementById('cityList');
+    const filtered = filter
+      ? cities.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+      : cities;
+
+    if (cities.length === 0) {
+      list.innerHTML = '<div class="city-no-results">Города не добавлены</div>';
+      return;
+    }
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="city-no-results">Ничего не найдено</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(c => `
+      <div class="city-item ${selectedCity?.id === c.id ? 'active' : ''}" onclick="selectCity('${c.id}')">
+        <div class="city-item-pin">📍</div>
+        <div class="city-item-body">
+          <div class="city-item-name">Г. ${c.name.toUpperCase()}${c.addresses[0] ? ', ' + c.addresses[0].address.toUpperCase() : ''}</div>
+          ${c.addresses.length > 1 ? `<div class="city-item-addrs">+${c.addresses.length - 1} адрес</div>` : ''}
+        </div>
+        <div class="city-item-arrow">›</div>
+      </div>
+    `).join('');
+  }
+
+  function filterCities(val) {
+    renderCities(val);
+  }
+
+  function selectCity(id, closeModal = true) {
+    const cities = siteData.cities || [];
+    selectedCity = cities.find(c => c.id === id);
+    if (selectedCity) {
+      cityChosen = true;
+      document.getElementById('currentCityLabel').textContent = selectedCity.name;
+      const addrs = selectedCity.addresses;
+      document.getElementById('footerAddress').textContent = addrs.length > 0 ? '📍 ' + addrs.map(a => a.address).join(', ') : '';
+      renderCities();
+    }
+    if (closeModal) closeCityModal();
+    initAnimations();
+  }
+
+  function openCityModal() {
+    const overlay = document.getElementById('cityModal');
+    overlay.classList.add('open');
+    // Сбрасываем поиск
+    const s = document.getElementById('citySearch');
+    if (s) { s.value = ''; renderCities(); }
+  }
+
+  function closeCityModal() {
+    // Закрывать только если город уже выбран
+    if (!cityChosen) return;
+    document.getElementById('cityModal').classList.remove('open');
+  }
+
+  // Клик по оверлею — только если город уже выбран
+  document.getElementById('cityModal').addEventListener('click', function(e) {
+    if (e.target === this && cityChosen) closeCityModal();
+  });
+
+  // ─── Jivo ────────────────────────────────────────────────────────────────
+  function injectJivo() {
+    if (siteData.jivo) {
+      const div = document.createElement('div');
+      div.innerHTML = siteData.jivo;
+      document.body.appendChild(div);
+    }
+  }
+
+  // ─── Toast ───────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── Chat Widget ──────────────────────────────────────────────────────────
+  let chatWs = null;
+  let chatIsOpen = false;
+  function toggleChat() {
+    chatIsOpen = !chatIsOpen;
+    document.getElementById('chatWindow').classList.toggle('open', chatIsOpen);
+    document.getElementById('chatIconOpen').style.display = chatIsOpen ? 'none' : '';
+    document.getElementById('chatIconClose').style.display = chatIsOpen ? '' : 'none';
+    if (chatIsOpen) {
+      const nameInput = document.getElementById('chatNameInput');
+      if (nameInput && document.getElementById('chatNameForm').style.display !== 'none') {
+        nameInput.focus();
+      }
+    }
+  }
+
+  function startChat() {
+    const nameInput = document.getElementById('chatNameInput');
+    const name = (nameInput?.value || '').trim();
+    if (!name) { nameInput?.focus(); return; }
+
+    if (!validatePhone('chatPhoneNumber')) { showToast('Неправильно набран номер'); return; }
+    const number = (document.getElementById('chatPhoneNumber')?.value || '').trim();
+    const phone = '+7 ' + number;
+
+    document.getElementById('chatNameForm').style.display = 'none';
+    document.getElementById('chatMessages').style.display = 'flex';
+    document.getElementById('chatInputArea').style.display = 'flex';
+    addChatMessage('system', 'Подключаемся к оператору...');
+
+    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    chatWs = new WebSocket(wsProto + '//' + location.host);
+
+    chatWs.onopen = () => {
+      chatWs.send(JSON.stringify({ type: 'start', name, phone }));
+    };
+
+    chatWs.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'ready') {
+          addChatMessage('system', 'Оператор подключён. Пишите!');
+          document.getElementById('chatInput')?.focus();
+          if (window._pendingBookingMessage) {
+            const bookingMsg = window._pendingBookingMessage;
+            window._pendingBookingMessage = null;
+            setTimeout(() => {
+              if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ type: 'message', text: bookingMsg }));
+                addChatMessage('self', bookingMsg);
+              }
+            }, 400);
+          }
+        } else if (msg.type === 'message') {
+          addChatMessage('operator', msg.text, msg.from);
+        } else if (msg.type === 'error') {
+          addChatMessage('system', msg.text);
+        }
+      } catch (_) {}
+    };
+
+    chatWs.onclose = () => {
+      addChatMessage('system', 'Соединение закрыто');
+      chatWs = null;
+      const btn = document.getElementById('chatSendBtn');
+      const inp = document.getElementById('chatInput');
+      if (btn) btn.disabled = true;
+      if (inp) inp.disabled = true;
+    };
+
+    chatWs.onerror = () => {
+      addChatMessage('system', 'Ошибка соединения');
+    };
+  }
+
+  function addChatMessage(type, text, from) {
+    const messages = document.getElementById('chatMessages');
+    if (!messages) return;
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + type;
+    if (type === 'operator' && from) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'chat-msg-name';
+      nameEl.textContent = from;
+      div.appendChild(nameEl);
+    }
+    const textEl = document.createElement('div');
+    textEl.textContent = text;
+    div.appendChild(textEl);
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = (input?.value || '').trim();
+    if (!text || !chatWs || chatWs.readyState !== WebSocket.OPEN) return;
+    chatWs.send(JSON.stringify({ type: 'message', text }));
+    addChatMessage('self', text);
+    input.value = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('chatInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+    });
+    document.getElementById('chatNameInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startChat();
+    });
+  });
+
+  // ─── TG Callback ─────────────────────────────────────────────────────────
+  function toggleTgCallback() {
+    const popup = document.getElementById('tgCallPopup');
+    popup.classList.toggle('open');
+    if (popup.classList.contains('open')) {
+      const chatWin = document.getElementById('chatWindow');
+      if (chatWin.classList.contains('open')) {
+        chatWin.classList.remove('open');
+        document.getElementById('chatIconOpen').style.display = '';
+        document.getElementById('chatIconClose').style.display = 'none';
+      }
+      setTimeout(() => document.getElementById('tgCallPhone').focus(), 50);
+    }
+  }
+
+  async function submitCallback() {
+    if (!validatePhone('tgCallPhone')) { showToast('Неправильно набран номер'); return; }
+    const phone = document.getElementById('tgCallPhone').value.trim();
+    const btn = document.getElementById('tgCallSendBtn');
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+      await fetch('/api/callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      document.getElementById('tgCallDone').style.display = 'block';
+      btn.style.display = 'none';
+    } catch {
+      btn.textContent = 'Ошибка, повторите';
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('tgCallPopup');
+    const btn = document.getElementById('tgCallBtn');
+    if (popup.classList.contains('open') && !popup.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+      popup.classList.remove('open');
+    }
+  });
+
+  // ─── Мобильное меню ──────────────────────────────────────────────────────
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('navHamburger');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+
+  function closeMobileMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+    document.getElementById('navHamburger').classList.remove('open');
+  }
+
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('navHamburger');
+    if (menu && btn && menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+      closeMobileMenu();
+    }
+  });
+
+  window.addEventListener('scroll', () => {
+    if (document.getElementById('mobileMenu').classList.contains('open')) closeMobileMenu();
+  }, { passive: true });
+
+  // ─── Форматирование телефона ─────────────────────────────────────────────
+  function formatChatPhone(input) {
+    let d = input.value.replace(/\D/g, '').slice(0, 10);
+    if (!d) { input.value = ''; return; }
+    let r = '(' + d.slice(0, 3);
+    if (d.length > 3) r += ') ' + d.slice(3, 6);
+    if (d.length > 6) r += '-' + d.slice(6, 8);
+    if (d.length > 8) r += '-' + d.slice(8, 10);
+    input.value = r;
+  }
+
+  function formatRuPhone(input) {
+    let d = input.value.replace(/\D/g, '');
+    if (d.length > 0 && (d[0] === '7' || d[0] === '8')) d = d.slice(1);
+    d = d.slice(0, 10);
+    if (!d) { input.value = ''; return; }
+    let r = '+7 (';
+    if (d.length <= 3) {
+      r += d;
+    } else {
+      r += d.slice(0, 3) + ') ';
+      if (d.length <= 6) {
+        r += d.slice(3);
+      } else {
+        r += d.slice(3, 6) + '-';
+        if (d.length <= 8) {
+          r += d.slice(6);
+        } else {
+          r += d.slice(6, 8) + '-' + d.slice(8);
+        }
+      }
+    }
+    input.value = r;
+  }
+
+  // ─── Валидация телефона ─────────────────────────────────────────────────
+  function digitCount(s) { return (s.replace(/\D/g, '')).length; }
+
+  function validatePhone(inputId, minDigits) {
+    const el = document.getElementById(inputId);
+    if (!el) return false;
+    const ok = digitCount(el.value) >= (minDigits || 11);
+    el.classList.remove('shake');
+    if (ok) {
+      el.classList.remove('input-error');
+    } else {
+      el.classList.add('input-error');
+      void el.offsetWidth; // reflow для перезапуска анимации
+      el.classList.add('shake');
+    }
+    return ok;
+  }
+
+  // ─── Date-time picker ────────────────────────────────────────────────────
+  const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const DOW_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  let dtYear, dtMonth, dtDay = null;
+
+  function initDtPicker() {
+    const now = new Date();
+    dtYear = now.getFullYear();
+    dtMonth = now.getMonth();
+    dtDay = null;
+  }
+  initDtPicker();
+
+  function toggleDtPicker() {
+    const p = document.getElementById('dtPicker');
+    if (p.style.display === 'none') {
+      p.style.display = 'block';
+      renderDtCalendar();
+    } else {
+      p.style.display = 'none';
+    }
+  }
+
+  function closeDtPicker() {
+    document.getElementById('dtPicker').style.display = 'none';
+  }
+
+  function dtNavMonth(dir) {
+    dtMonth += dir;
+    if (dtMonth < 0)  { dtMonth = 11; dtYear--; }
+    if (dtMonth > 11) { dtMonth = 0;  dtYear++; }
+    renderDtCalendar();
+  }
+
+  function renderDtCalendar() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const first = new Date(dtYear, dtMonth, 1);
+    const last  = new Date(dtYear, dtMonth + 1, 0);
+    let dow = first.getDay(); // 0=Sun
+    dow = dow === 0 ? 6 : dow - 1; // Mon=0
+
+    let cells = '';
+    for (let i = 0; i < dow; i++) cells += '<div class="dt-day empty"></div>';
+    for (let d = 1; d <= last.getDate(); d++) {
+      const isPast = new Date(dtYear, dtMonth, d) < today;
+      const isSel  = d === dtDay;
+      cells += `<div class="dt-day${isPast?' past':''}${isSel?' selected':''}" onclick="dtSelectDay(${d})">${d}</div>`;
+    }
+
+    document.getElementById('dtPicker').innerHTML = `
+      <div class="dt-cal-header">
+        <button class="dt-nav-btn" onclick="dtNavMonth(-1)">‹</button>
+        <span>${MONTHS_RU[dtMonth]} ${dtYear}</span>
+        <button class="dt-nav-btn" onclick="dtNavMonth(1)">›</button>
+      </div>
+      <div class="dt-cal-dow">${DOW_SHORT.map(d=>`<div>${d}</div>`).join('')}</div>
+      <div class="dt-cal-grid">${cells}</div>`;
+  }
+
+  function dtSelectDay(d) {
+    dtDay = d;
+    renderDtTimePicker();
+  }
+
+  function renderDtTimePicker() {
+    const curTime = document.getElementById('bTime').value;
+    let items = '';
+    for (let h = 0; h < 24; h++) {
+      const t = (h < 10 ? '0' : '') + h + ':00';
+      items += `<div class="dt-time-item${curTime===t?' selected':''}" onclick="dtSelectTime('${t}')">${t}</div>`;
+    }
+    document.getElementById('dtPicker').innerHTML = `
+      <div class="dt-cal-header">
+        <button class="dt-nav-btn" onclick="renderDtCalendar()">‹</button>
+        <span>${dtDay} ${MONTHS_GEN[dtMonth]} ${dtYear}</span>
+        <div></div>
+      </div>
+      <div class="dt-time-grid">${items}</div>`;
+  }
+
+  function dtSelectTime(t) {
+    const dateVal = `${dtYear}-${String(dtMonth+1).padStart(2,'0')}-${String(dtDay).padStart(2,'0')}`;
+    document.getElementById('bDate').value = dateVal;
+    document.getElementById('bTime').value = t;
+    const btn = document.getElementById('dtPickerBtn');
+    btn.textContent = `${dtDay} ${MONTHS_GEN[dtMonth]} ${dtYear}, ${t}`;
+    btn.classList.add('has-value');
+    closeDtPicker();
+  }
+
+  // Закрыть пикер при клике вне него
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.dt-picker-wrap');
+    if (wrap && !wrap.contains(e.target)) closeDtPicker();
+  });
+
+  // Сбрасываем пикер при bkReset
+  const _origBkReset = bkReset;
+  bkReset = function() {
+    _origBkReset();
+    initDtPicker();
+    const btn = document.getElementById('dtPickerBtn');
+    if (btn) { btn.textContent = 'Выбрать дату и время'; btn.classList.remove('has-value'); }
+  };
+
+  // ─── Scroll reveal ───────────────────────────────────────────────────────
+  let _animationsInited = false;
+
+  function initAnimations() {
+    if (_animationsInited) return;
+    _animationsInited = true;
+    document.body.classList.add('animations-ready');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal, .reveal-left').forEach(el => revealObserver.observe(el));
+  }
+
+  // ─── Старт ───────────────────────────────────────────────────────────────
+  loadData();
+
+  async function loadData() {
+    try {
+      const res = await fetch('/api/data');
+      siteData = await res.json();
+      renderAll();
+      // Показываем выбор города при входе
+      if (siteData.cities && siteData.cities.length > 0) {
+        openCityModal();
+      }
+    } catch (e) {
+      console.error('Не удалось загрузить данные:', e);
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -166,14 +166,39 @@
 
   /* FEATURES */
   .steps-section { background: var(--gray); }
-  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 48px; }
-  .step { background: var(--black); padding: 36px 32px; position: relative; overflow: hidden; transition: background 0.3s; }
-  .step:hover { background: #111; }
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+  .step {
+    background: var(--black); padding: 0; position: relative; overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    min-height: 220px;
+    display: flex;
+    align-items: stretch;
+  }
+  .step:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(208,2,27,0.15); border-color: rgba(208,2,27,0.4); }
+  .step-bg {
+    position: absolute; inset: 0; z-index: 0;
+  }
+  .step-bg img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .step-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(10,10,10,0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .step-content {
+    position: relative; z-index: 1;
+    padding: 36px 32px; width: 100%;
+    display: flex; flex-direction: column;
+  }
   .step-num { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 64px; color: rgba(255,255,255,0.04); position: absolute; top: 16px; right: 24px; line-height: 1; }
-  .step-icon { width: 48px; height: 48px; background: var(--red); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+  .step-icon { width: 48px; height: 48px; background: var(--red); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; flex-shrink: 0; }
   .step-icon svg { width: 24px; height: 24px; fill: none; stroke: white; stroke-width: 2; }
-  .step-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 12px; }
-  .step-text { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+  .step-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 12px; position: relative; z-index: 2; }
+  .step-text { font-size: 14px; color: var(--text-muted); line-height: 1.65; position: relative; z-index: 2; }
 
   /* ROOMS */
   .rooms-section { background: var(--black); }
@@ -501,8 +526,6 @@
   .room-card { transition: border-color 0.25s, transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s; }
   .room-card:hover { border-color: var(--red); transform: translateY(-6px); box-shadow: 0 16px 40px rgba(208,2,27,0.18); }
 
-  .step { transition: background 0.3s, transform 0.3s; }
-  .step:hover { background: #111; transform: translateY(-3px); }
 
   /* TOAST */
   .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a1a; border: 1px solid rgba(255,255,255,0.15); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 999; transition: transform 0.3s; pointer-events: none; }
@@ -599,7 +622,7 @@
     section { padding: 64px 20px; }
 
     .steps-grid { grid-template-columns: 1fr; }
-    .step { padding: 28px 24px; }
+    .step-content { padding: 28px 24px; }
 
     .packages-grid { grid-template-columns: 1fr; }
 
@@ -745,12 +768,12 @@
   <div class="section-label">Почему мы</div>
   <div class="section-title">Полная свобода — внутри зала</div>
   <div class="steps-grid">
-    <div class="step"><div class="step-num">01</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="step-name">Экран во всю стену</div><div class="step-text">Проектор и звуковая система кинотеатрального уровня. Кино, сериалы, спорт — что хочешь.</div></div>
-    <div class="step"><div class="step-num">02</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="step-name">Своя музыка</div><div class="step-text">Подключи телефон, запусти любой плейлист. Зал полностью под тебя.</div></div>
-    <div class="step"><div class="step-num">03</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="step-name">Только свои</div><div class="step-text">Зал арендуется целиком. Свидание, день рождения, мальчишник — только ваша компания.</div></div>
-    <div class="step"><div class="step-num">04</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="step-name">Романтика на высший балл</div><div class="step-text">Декор, свечи, вино — принеси своё или закажи у нас. Создадим нужную атмосферу.</div></div>
-    <div class="step"><div class="step-num">05</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="step-name">Для бизнеса тоже</div><div class="step-text">Подключи ноутбук, проведи презентацию в нестандартной обстановке.</div></div>
-    <div class="step"><div class="step-num">06</div><div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="step-name">Круглосуточно</div><div class="step-text">Ночью или утром — мы открыты. Бронируй удобное время без ограничений.</div></div>
+    <div class="step"><div class="step-bg"><img src="6.jpg" alt=""></div><div class="step-content"><div class="step-num">01</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="step-name">Экран во всю стену</div><div class="step-text">Проектор и звуковая система кинотеатрального уровня. Кино, сериалы, спорт — что хочешь.</div></div></div>
+    <div class="step"><div class="step-bg"><img src="11.jpg" alt=""></div><div class="step-content"><div class="step-num">02</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="step-name">Своя музыка</div><div class="step-text">Подключи телефон, запусти любой плейлист. Зал полностью под тебя.</div></div></div>
+    <div class="step"><div class="step-bg"><img src="10.jpg" alt=""></div><div class="step-content"><div class="step-num">03</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="step-name">Только свои</div><div class="step-text">Зал арендуется целиком. Свидание, день рождения, мальчишник — только ваша компания.</div></div></div>
+    <div class="step"><div class="step-bg"><img src="9.jpg" alt=""></div><div class="step-content"><div class="step-num">04</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="step-name">Романтика на высший балл</div><div class="step-text">Декор, свечи, вино — принеси своё или закажи у нас. Создадим нужную атмосферу.</div></div></div>
+    <div class="step"><div class="step-bg"><img src="8.jpg" alt=""></div><div class="step-content"><div class="step-num">05</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="step-name">Для бизнеса тоже</div><div class="step-text">Подключи ноутбук, проведи презентацию в нестандартной обстановке.</div></div></div>
+    <div class="step"><div class="step-bg"><img src="7.webp" alt=""></div><div class="step-content"><div class="step-num">06</div><div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="step-name">Круглосуточно</div><div class="step-text">Ночью или утром — мы открыты. Бронируй удобное время без ограничений.</div></div></div>
   </div>
 </section>
 

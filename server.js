@@ -204,7 +204,7 @@ if (!BOT_TOKEN) {
     if (!isAdmin(msg)) return;
     clearState(msg.chat.id);
     bot.sendMessage(msg.chat.id,
-      `👋 *АнтиКино — панель управления*\n\nВыбери раздел:`,
+      `👋 *Imperial Vision — панель управления*\n\nВыбери раздел:`,
       {
         parse_mode: 'Markdown',
         reply_markup: {

@@ -10,6 +10,18 @@
   :root { --red: #D0021B; --red-dark: #A80116; --black: #0A0A0A; --white: #FFFFFF; --gray: #1A1A1A; --gray-light: #2A2A2A; --text-muted: rgba(255,255,255,0.6); }
   body { font-family: 'Inter', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
 
+  .page-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('1212.jpeg') no-repeat center center / cover;
+  }
+  .page-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(10,10,10,0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .page { padding: 96px 48px 64px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -77,6 +89,8 @@
 </style>
 </head>
 <body>
+
+<div class="page-bg"></div>
 
 <nav>
   <a class="nav-logo" href="/">IMPERIAL <span>VISION</span></a>

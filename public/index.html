@@ -318,7 +318,7 @@
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   /* BOOKING MODAL */
-  .bk-modal-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 16px; }
+  .bk-modal-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .bk-modal-overlay.open { display: flex; }
   .bk-modal { background: var(--gray); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px 28px 24px; box-shadow: 0 24px 80px rgba(0,0,0,0.7); }
   .bk-modal::-webkit-scrollbar { width: 4px; }
@@ -341,23 +341,24 @@
   @keyframes bkFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   /* EXTRAS */
-  .extras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 2px; }
+  .extras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 2px; }
   .extras-grid::-webkit-scrollbar { width: 3px; }
   .extras-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
-  .extra-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 10px; text-align: center; transition: border-color 0.2s; position: relative; overflow: hidden; }
-  .extra-card.selected { border-color: rgba(208,2,27,0.5); background: rgba(208,2,27,0.06); }
+  .extra-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 10px; text-align: center; transition: all 0.2s; position: relative; overflow: hidden; cursor: pointer; }
+  .extra-card:hover { border-color: rgba(255,255,255,0.2); }
+  .extra-card.selected { border-color: var(--red); background: rgba(208,2,27,0.08); }
   .extra-card.has-image { padding: 0; }
   .extra-card.has-image .snack-bg { position: absolute; inset: 0; z-index: 0; }
   .extra-card.has-image .snack-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .extra-card.has-image .snack-body { position: relative; z-index: 1; padding: 12px 10px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.05) 100%); min-height: 130px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .extra-card.has-image .snack-body { position: relative; z-index: 1; padding: 14px 12px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.05) 100%); min-height: 130px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
   .extra-emoji { font-size: 28px; margin-bottom: 6px; }
   .extra-emoji img { width: 36px; height: 36px; object-fit: contain; display: inline-block; border-radius: 4px; vertical-align: middle; }
   .extra-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
-  .extra-price { font-size: 12px; color: var(--red); font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 8px; }
-  .extra-qty-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .extra-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: none; color: white; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 0; }
-  .extra-btn:hover { border-color: var(--red); color: var(--red); }
-  .extra-qty { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; min-width: 16px; text-align: center; }
+  .extra-price { font-size: 12px; color: var(--red); font-family: 'Montserrat', sans-serif; font-weight: 700; margin-bottom: 10px; }
+  .extra-checkbox { width: 22px; height: 22px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.25); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; background: transparent; }
+  .extra-card.selected .extra-checkbox { border-color: var(--red); background: var(--red); }
+  .extra-checkbox svg { display: none; width: 12px; height: 12px; }
+  .extra-card.selected .extra-checkbox svg { display: block; }
   .extras-total-bar { margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 14px; display: flex; align-items: center; }
 
   /* BOOKING SUMMARY */
@@ -715,7 +716,7 @@
   <ul class="nav-links">
     <li><a href="#rooms">Залы</a></li>
     <li><a href="#packages">Пакеты</a></li>
-    <li><a href="snacks.html">Допы</a></li>
+    <li><a href="/snacks">Допы</a></li>
     <li><a href="#booking">Забронировать</a></li>
   </ul>
   <div class="nav-right">
@@ -733,7 +734,7 @@
 <div class="mobile-menu" id="mobileMenu">
   <a href="#rooms" onclick="closeMobileMenu()">Залы</a>
   <a href="#packages" onclick="closeMobileMenu()">Пакеты</a>
-  <a href="snacks.html">Допы</a>
+  <a href="/snacks">Допы</a>
   <a href="#booking" onclick="closeMobileMenu()">Забронировать</a>
 </div>
 
@@ -790,7 +791,7 @@
   </div>
   <div class="rooms-nav">
     <div class="room-dots" id="roomDots"></div>
-    <a href="rooms.html" class="rooms-all-link">Все залы →</a>
+    <a href="/rooms" class="rooms-all-link">Все залы →</a>
   </div>
 </section>
 
@@ -965,7 +966,7 @@
       <div style="margin-top: 16px; font-size:13px; color: rgba(255,255,255,0.5);" id="footerAddress"></div>
     </div>
     <div class="footer-col"><h5>О нас</h5><ul><li><a href="#rooms">Наши залы</a></li><li><a href="#">Отзывы</a></li><li><a href="#">Команда</a></li></ul></div>
-    <div class="footer-col"><h5>Сервисы</h5><ul><li><a href="#packages">Все пакеты</a></li><li><a href="snacks.html">Допы и снеки</a></li><li><a href="#">Подарочный сертификат</a></li><li><a href="#">Для бизнеса</a></li></ul></div>
+    <div class="footer-col"><h5>Сервисы</h5><ul><li><a href="#packages">Все пакеты</a></li><li><a href="/snacks">Допы и снеки</a></li><li><a href="#">Подарочный сертификат</a></li><li><a href="#">Для бизнеса</a></li></ul></div>
     <div class="footer-col"><h5>Контакты</h5><ul><li><a href="#">+7 (999) 000-00-00</a></li><li><a href="#">Telegram</a></li><li><a href="#">WhatsApp</a></li></ul></div>
   </div>
   <div class="footer-bottom">
@@ -1159,17 +1160,16 @@
     grid.innerHTML = snacks.map(s => {
       const visual = s.thumb ? `<img src="${s.thumb}" alt="${s.name}">` : (s.emoji || '🍿');
       const hasImg = s.image || s.thumb;
+      const checked = (extrasQty[s.id]||0) > 0;
       return `
-      <div class="extra-card${(extrasQty[s.id]||0)>0?' selected':''}${hasImg ? ' has-image' : ''}" id="ecard_${s.id}">
+      <div class="extra-card${checked?' selected':''}${hasImg ? ' has-image' : ''}" id="ecard_${s.id}" onclick="toggleExtra('${s.id}')">
         ${s.image ? `<div class="snack-bg"><img src="${s.image}" alt="${s.name}"></div>` : ''}
         <div class="snack-body">
           <div class="extra-emoji">${visual}</div>
           <div class="extra-name">${s.name}</div>
           <div class="extra-price">${s.price.toLocaleString('ru-RU')} ₽</div>
-          <div class="extra-qty-row">
-            <button class="extra-btn" onclick="changeQty('${s.id}',-1)">−</button>
-            <span class="extra-qty" id="qty_${s.id}">${extrasQty[s.id]||0}</span>
-            <button class="extra-btn" onclick="changeQty('${s.id}',1)">+</button>
+          <div class="extra-checkbox">
+            <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 6 4.5 9 10.5 3"/></svg>
           </div>
         </div>
       </div>`;
@@ -1177,10 +1177,8 @@
     updateExtrasTotal();
   }
 
-  function changeQty(id, delta) {
-    extrasQty[id] = Math.max(0, (extrasQty[id] || 0) + delta);
-    const qEl = document.getElementById('qty_' + id);
-    if (qEl) qEl.textContent = extrasQty[id];
+  function toggleExtra(id) {
+    extrasQty[id] = (extrasQty[id] || 0) > 0 ? 0 : 1;
     const card = document.getElementById('ecard_' + id);
     if (card) card.classList.toggle('selected', extrasQty[id] > 0);
     updateExtrasTotal();

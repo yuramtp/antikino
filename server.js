@@ -37,6 +37,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/oplata', express.static(path.join(__dirname, 'oplata')));
+app.get('/rooms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'rooms.html')));
+app.get('/snacks', (req, res) => res.sendFile(path.join(__dirname, 'public', 'snacks.html')));
 app.get('/payment', (req, res) => {
   const qs = req.query.amount ? '?amount=' + req.query.amount : '';
   res.redirect('/oplata/' + encodeURIComponent('Оплата заказа.html') + qs);

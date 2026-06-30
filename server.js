@@ -34,6 +34,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+// ─── Multer для загрузки чеков об оплате ─────────────────────────────────────
+const receiptStorage = multer.diskStorage({
+  destination: UPLOADS_DIR,
+  filename: (req, file, cb) => cb(null, 'receipt_' + Date.now() + path.extname(file.originalname))
+});
+const uploadReceipt = multer({
+  storage: receiptStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /^(application\/pdf|image\/(jpeg|png|webp))$/.test(file.mimetype))
+});
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
@@ -68,6 +79,7 @@ app.post('/api/booking', async (req, res) => {
   const lines = [
     `🎬 *Новая заявка на бронирование*\n`,
     pkg ? `🎬 *Тариф:* ${pkg}${price ? ` — ${price.toLocaleString('ru-RU')} ₽` : ''}` : null,
+    room ? `🎭 *Зал:* ${room}` : null,
     `👤 *Имя:* ${name || '—'}`,
     `📞 *Телефон:* ${phone || '—'}`,
     date    ? `📅 *Дата:* ${date}` : null,
@@ -85,6 +97,30 @@ app.post('/api/callback', (req, res) => {
   res.json({ ok: true });
   if (!bot || !phone) return;
   ADMIN_CHAT_IDS.forEach(id => bot.sendMessage(id, `📞 *Запрос звонка*\n\nТелефон: ${phone}`, { parse_mode: 'Markdown' }).catch(() => {}));
+});
+
+// ─── API: чек об оплате ───────────────────────────────────────────────────────
+app.post('/api/payment-receipt', uploadReceipt.single('receipt'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: 'Прикрепи PDF или фото чека' });
+  const { name, phone, bank, amount, package: pkg, room } = req.body || {};
+
+  if (!bot) { fs.unlink(req.file.path, () => {}); return res.json({ ok: true }); }
+
+  const caption = [
+    '🧾 *Чек об оплате*\n',
+    `👤 *Имя:* ${name || '—'}`,
+    `📞 *Телефон:* ${phone || '—'}`,
+    bank ? `🏦 *Банк:* ${bank}` : null,
+    amount ? `💰 *Сумма:* ${Number(amount).toLocaleString('ru-RU')} ₽` : null,
+    pkg ? `🎬 *Тариф:* ${pkg}` : null,
+    room ? `🎭 *Зал:* ${room}` : null,
+  ].filter(Boolean).join('\n');
+
+  await Promise.all(ADMIN_CHAT_IDS.map(id =>
+    bot.sendDocument(id, req.file.path, { caption, parse_mode: 'Markdown' }).catch(() => {})
+  ));
+
+  res.json({ ok: true });
 });
 
 // ─── Чат техподдержки: сессии ────────────────────────────────────────────────

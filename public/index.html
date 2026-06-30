@@ -380,6 +380,19 @@
   .bk-success-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 22px; text-align: center; margin-bottom: 10px; }
   .bk-success-sub { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.6; }
 
+  /* CARD PAYMENT */
+  .cp-bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .cp-bank-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: var(--white); padding: 18px 10px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: 'Montserrat', sans-serif; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .cp-bank-btn:hover { border-color: var(--red); background: rgba(208,2,27,0.12); }
+  .cp-spinner { width: 46px; height: 46px; border: 4px solid rgba(255,255,255,0.15); border-top-color: var(--red); border-radius: 50%; margin: 0 auto; animation: cpSpin 0.8s linear infinite; }
+  @keyframes cpSpin { to { transform: rotate(360deg); } }
+  .cp-card-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .cp-card-label { font-size: 11px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+  .cp-card-number { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: 1px; color: var(--white); }
+  .cp-copy-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: var(--white); border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+  .cp-copy-btn:hover { border-color: var(--red); color: var(--red); }
+  .cp-attach-btn.has-file { border-color: var(--red); color: var(--red); }
+
   /* FOOTER */
   footer { background: var(--red-dark, #A80116); padding: 56px 48px 32px; }
   .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
@@ -777,6 +790,31 @@
   </div>
 </div>
 
+<!-- CARD PAYMENT MODAL -->
+<div id="cardPaymentOverlay" class="bk-modal-overlay" style="z-index:550" onclick="if(event.target===this)closeCardPayment()">
+  <div class="bk-modal" style="max-width:420px">
+    <div class="bk-modal-header">
+      <div class="bk-modal-pkg">Оплата картой</div>
+      <button class="bk-modal-close" onclick="closeCardPayment()">×</button>
+    </div>
+
+    <!-- Шаг: выбор банка -->
+    <div id="cpBankStep" class="bk-step">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Выбери свой банк для перевода</div>
+      <div class="cp-bank-grid" id="cpBankGrid"></div>
+    </div>
+
+    <!-- Шаг: загрузка -->
+    <div id="cpLoadingStep" class="bk-step" style="display:none;text-align:center;padding:54px 0;">
+      <div class="cp-spinner"></div>
+      <div id="cpLoadingText" style="margin-top:20px;font-size:14px;color:var(--text-muted);"></div>
+    </div>
+
+    <!-- Шаг: реквизиты + чек -->
+    <div id="cpDetailsStep" class="bk-step" style="display:none"></div>
+  </div>
+</div>
+
 <!-- BOOKING MODAL -->
 <div id="bookingModal" class="bk-modal-overlay" onclick="if(event.target===this)closeBookingModal()">
   <div class="bk-modal">
@@ -794,8 +832,10 @@
       <div class="bk-si" id="bsi2"><span>2</span></div>
       <div class="bk-si-line" id="bsiL2"></div>
       <div class="bk-si" id="bsi3"><span>3</span></div>
+      <div class="bk-si-line" id="bsiL3"></div>
+      <div class="bk-si" id="bsi4"><span>4</span></div>
     </div>
-    <div class="bk-step-labels"><span>Детали</span><span>Допы</span><span>Итог</span></div>
+    <div class="bk-step-labels"><span>Детали</span><span>Зал</span><span>Допы</span><span>Итог</span></div>
 
     <!-- Шаг 1 -->
     <div id="bStep1" class="bk-step">
@@ -811,27 +851,36 @@
         <div id="dtPicker" style="display:none" onclick="event.stopPropagation()"></div>
       </div>
       <div class="form-group"><label class="form-label">Комментарий</label><textarea class="form-input" id="bComment" rows="2" placeholder="Повод, пожелания, количество гостей..."></textarea></div>
-      <button class="btn-primary" style="width:100%;padding:13px" onclick="bkGoStep(2)">Далее — выбрать допы →</button>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="bkGoStep(2)">Далее →</button>
     </div>
 
     <!-- Шаг 2 -->
     <div id="bStep2" class="bk-step" style="display:none">
+      <div id="roomsGrid" class="extras-grid"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(1)">← Назад</button>
+        <button class="btn-primary" style="flex:2;padding:12px" onclick="bkGoStep(3)">Далее →</button>
+      </div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div id="bStep3" class="bk-step" style="display:none">
       <div id="extrasGrid" class="extras-grid"></div>
       <div class="extras-total-bar">
         Допы: <strong id="extrasTotalPrice">0 ₽</strong>
         <span style="color:var(--text-muted);font-size:12px;margin-left:6px">(можно пропустить)</span>
       </div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(1)">← Назад</button>
-        <button class="btn-primary" style="flex:2;padding:12px" onclick="bkGoStep(3)">Перейти к итогу →</button>
+        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(2)">← Назад</button>
+        <button class="btn-primary" style="flex:2;padding:12px" onclick="bkGoStep(4)">Перейти к итогу →</button>
       </div>
     </div>
 
-    <!-- Шаг 3 -->
-    <div id="bStep3" class="bk-step" style="display:none">
+    <!-- Шаг 4 -->
+    <div id="bStep4" class="bk-step" style="display:none">
       <div id="bkSummary"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(2)">← Назад</button>
+        <button class="btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="bkGoStep(3)">← Назад</button>
         <button class="btn-primary" style="flex:2;padding:12px" id="bkSubmitBtn" onclick="submitBooking()">ОТПРАВИТЬ ЗАЯВКУ</button>
       </div>
     </div>
@@ -854,9 +903,9 @@
       <div class="footer-tagline">Частный кинотеатр VIP-формата. Работаем круглосуточно — для тебя и твоих.</div>
       <div style="margin-top: 16px; font-size:13px; color: rgba(255,255,255,0.5);" id="footerAddress"></div>
     </div>
-    <div class="footer-col"><h5>О нас</h5><ul><li><a href="#rooms">Наши залы</a></li><li><a href="#">Отзывы</a></li><li><a href="#">Команда</a></li></ul></div>
-    <div class="footer-col"><h5>Сервисы</h5><ul><li><a href="#packages">Все пакеты</a></li><li><a href="/snacks">Допы и снеки</a></li><li><a href="#">Подарочный сертификат</a></li><li><a href="#">Для бизнеса</a></li></ul></div>
-    <div class="footer-col"><h5>Контакты</h5><ul><li><a href="#">+7 (999) 000-00-00</a></li><li><a href="#">Telegram</a></li><li><a href="#">WhatsApp</a></li></ul></div>
+    <div class="footer-col"><h5>О нас</h5><ul><li><a href="#rooms">Наши залы</a></li></ul></div>
+    <div class="footer-col"><h5>Сервисы</h5><ul><li><a href="#packages">Все пакеты</a></li><li><a href="/snacks">Допы и снеки</a></li></ul></div>
+    <div class="footer-col"><h5>Контакты</h5><ul><li><a href="https://t.me/Imperial_Vision_official" target="_blank" rel="noopener">Telegram</a></li></ul></div>
   </div>
   <div class="footer-bottom">
     <div class="footer-copy">© 2026 Imperial <span style="color:var(--red)">Vision</span>. Информация не является публичной офертой.</div>
@@ -1025,18 +1074,22 @@
       bkData.date    = document.getElementById('bDate')?.value || '';
       bkData.time    = document.getElementById('bTime')?.value || '';
       bkData.comment = document.getElementById('bComment')?.value || '';
+      renderRoomsGrid();
+    }
+    if (step === 3 && bkCurrentStep === 2) {
+      if (!bkData.roomId) { showToast('Выбери зал'); return; }
       renderExtrasGrid();
     }
-    if (step === 3) renderBookingSummary();
+    if (step === 4) renderBookingSummary();
 
-    ['bStep1','bStep2','bStep3','bkSuccess'].forEach(id => {
+    ['bStep1','bStep2','bStep3','bStep4','bkSuccess'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
     const show = document.getElementById('bStep' + step) || document.getElementById('bkSuccess');
     if (show) show.style.display = 'block';
 
-    [1,2,3].forEach(i => {
+    [1,2,3,4].forEach(i => {
       const si = document.getElementById('bsi' + i);
       const ln = document.getElementById('bsiL' + i);
       if (si) {
@@ -1046,6 +1099,40 @@
       if (ln) ln.classList.toggle('done', i < step);
     });
     bkCurrentStep = step;
+  }
+
+  function renderRoomsGrid() {
+    const rooms = siteData.rooms || [];
+    const grid = document.getElementById('roomsGrid');
+    if (!grid) return;
+    if (rooms.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0">Залы пока не добавлены</p>';
+      return;
+    }
+    grid.innerHTML = rooms.map(r => {
+      const checked = bkData.roomId === r.id;
+      return `
+      <div class="extra-card${checked?' selected':''}${r.photo ? ' has-image' : ''}" id="rcard_${r.id}" onclick="selectRoom('${r.id}')">
+        ${r.photo ? `<div class="snack-bg"><img src="${r.photo}" alt="${r.name}"></div>` : ''}
+        <div class="snack-body">
+          <div class="extra-name">${r.name}</div>
+          <div class="extra-price" style="color:var(--text-muted)">${r.tag || ''}</div>
+          <div class="extra-checkbox">
+            <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 6 4.5 9 10.5 3"/></svg>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function selectRoom(id) {
+    const rooms = siteData.rooms || [];
+    const room = rooms.find(r => r.id === id);
+    if (!room) return;
+    bkData.roomId = id;
+    bkData.room = room.name;
+    document.querySelectorAll('#roomsGrid .extra-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('rcard_' + id)?.classList.add('selected');
   }
 
   function renderExtrasGrid() {
@@ -1099,6 +1186,7 @@
 
     const detailRows = [
       bkData.package && ['Тариф', bkData.package],
+      bkData.room    && ['Зал', bkData.room],
       ['Имя', bkData.name],
       ['Телефон', bkData.phone],
       bkData.date    && ['Дата', bkData.date],
@@ -1153,13 +1241,13 @@
   }
 
   function showBookingSuccess() {
-    ['bStep1','bStep2','bStep3'].forEach(id => {
+    ['bStep1','bStep2','bStep3','bStep4'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
     const ok = document.getElementById('bkSuccess');
     if (ok) ok.style.display = 'block';
-    [1,2,3].forEach(i => {
+    [1,2,3,4].forEach(i => {
       document.getElementById('bsi'+i)?.classList.add('done');
       document.getElementById('bsi'+i)?.classList.remove('active');
     });
@@ -1167,12 +1255,8 @@
 
   async function choosePayment() {
     closePaymentChoice();
-    const snacks = siteData.snacks || [];
-    const extrasTotal = snacks.reduce((s, x) => s + (extrasQty[x.id]||0) * x.price, 0);
-    const totalAmount = (bkData.price || 0) + extrasTotal;
     await submitBookingToServer();
-    window.open('/payment?amount=' + totalAmount, '_blank');
-    showBookingSuccess();
+    openCardPaymentModal();
   }
 
   async function chooseSupport() {
@@ -1180,6 +1264,144 @@
     await submitBookingToServer();
     openChatWithBookingInfo();
     showBookingSuccess();
+  }
+
+  // ─── Оплата картой: банк → загрузка → реквизиты + чек ───────────────────────
+  const CP_BANKS = ['Сбербанк', 'Т-Банк', 'Альфа-Банк', 'ВТБ', 'Райффайзен', 'Другой банк'];
+  let cpReceiptFile = null;
+
+  function bkTotalAmount() {
+    const snacks = siteData.snacks || [];
+    const extrasTotal = snacks.reduce((s, x) => s + (extrasQty[x.id]||0) * x.price, 0);
+    return (bkData.price || 0) + extrasTotal;
+  }
+
+  function openCardPaymentModal() {
+    closeBookingModal();
+    cpReceiptFile = null;
+    document.getElementById('cpBankGrid').innerHTML = CP_BANKS.map(b =>
+      `<button class="cp-bank-btn" onclick="selectCpBank('${b}')">${b}</button>`
+    ).join('');
+    document.getElementById('cpBankStep').style.display = 'block';
+    document.getElementById('cpLoadingStep').style.display = 'none';
+    document.getElementById('cpDetailsStep').style.display = 'none';
+    document.getElementById('cardPaymentOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCardPayment() {
+    document.getElementById('cardPaymentOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function selectCpBank(bankName) {
+    document.getElementById('cpBankStep').style.display = 'none';
+    document.getElementById('cpLoadingStep').style.display = 'block';
+
+    const textEl = document.getElementById('cpLoadingText');
+    const phrases = [`Подключаемся к ${bankName}...`, 'Проверяем реквизиты...', 'Формируем платёж...'];
+    let i = 0;
+    textEl.textContent = phrases[0];
+    const interval = setInterval(() => {
+      i++;
+      if (i < phrases.length) textEl.textContent = phrases[i];
+    }, 500);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      document.getElementById('cpLoadingStep').style.display = 'none';
+      showCpDetails(bankName);
+    }, 1600);
+  }
+
+  function showCpDetails(bankName) {
+    const card = siteData.card || {};
+    const amount = bkTotalAmount();
+
+    document.getElementById('cpDetailsStep').innerHTML = `
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:13px;color:var(--text-muted)">Перевод через ${bankName}</div>
+        <div style="font-family:'Montserrat',sans-serif;font-weight:900;font-size:30px;color:var(--white);margin-top:4px;">${amount.toLocaleString('ru-RU')} ₽</div>
+      </div>
+      <div class="cp-card-box">
+        <div class="cp-card-label">Номер карты</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="cp-card-number">${card.number || '—'}</div>
+          <button class="cp-copy-btn" onclick="copyCpCard()">Скопировать</button>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.8)">${card.bank || ''}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.8)">${card.name || ''}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">Переведи указанную сумму на карту и прикрепи чек (PDF или фото) — подтвердим бронь в течение 15 минут.</div>
+      <input type="file" id="cpReceiptInput" accept=".pdf,image/*" style="display:none" onchange="onCpFileChosen(this)">
+      <button class="btn-ghost cp-attach-btn" id="cpAttachBtn" style="width:100%;padding:12px;font-size:13px;margin-bottom:10px;" onclick="document.getElementById('cpReceiptInput').click()">📎 Прикрепить чек</button>
+      <button class="btn-primary" style="width:100%;padding:13px;" id="cpSubmitBtn" disabled onclick="submitCpReceipt('${bankName}', ${amount})">Отправить чек</button>
+      <div id="cpStatus" style="margin-top:10px;font-size:13px;text-align:center;color:var(--text-muted)"></div>
+    `;
+    document.getElementById('cpDetailsStep').style.display = 'block';
+  }
+
+  function copyCpCard() {
+    const card = siteData.card || {};
+    const number = (card.number || '').replace(/\s+/g, '');
+    if (!number) return;
+    navigator.clipboard?.writeText(number).then(() => showToast('Номер скопирован'));
+  }
+
+  function onCpFileChosen(input) {
+    const file = input.files[0] || null;
+    cpReceiptFile = file;
+    const btn = document.getElementById('cpAttachBtn');
+    const submitBtn = document.getElementById('cpSubmitBtn');
+    if (btn) {
+      btn.textContent = file ? `📎 ${file.name}` : '📎 Прикрепить чек';
+      btn.classList.toggle('has-file', !!file);
+    }
+    if (submitBtn) submitBtn.disabled = !file;
+  }
+
+  async function submitCpReceipt(bankName, amount) {
+    if (!cpReceiptFile) return;
+    const submitBtn = document.getElementById('cpSubmitBtn');
+    const status = document.getElementById('cpStatus');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Отправляем...';
+    status.textContent = '';
+
+    const fd = new FormData();
+    fd.append('receipt', cpReceiptFile);
+    fd.append('name', bkData.name || '');
+    fd.append('phone', bkData.phone || '');
+    fd.append('bank', bankName);
+    fd.append('amount', amount);
+    fd.append('package', bkData.package || '');
+    fd.append('room', bkData.room || '');
+
+    try {
+      const res = await fetch('/api/payment-receipt', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('cpDetailsStep').innerHTML = `
+          <div class="bk-success-icon">✅</div>
+          <div class="bk-success-title" style="font-size:18px;">Чек отправлен!</div>
+          <div class="bk-success-sub">Проверим оплату и подтвердим бронь в течение 15 минут.</div>
+          <button class="btn-primary" style="width:100%;padding:12px;margin-top:18px" onclick="finishCardPayment()">Готово</button>
+        `;
+      } else {
+        status.textContent = data.error || 'Не получилось отправить, попробуй ещё раз.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Отправить чек';
+      }
+    } catch(e) {
+      status.textContent = 'Ошибка сети, попробуй ещё раз.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Отправить чек';
+    }
+  }
+
+  function finishCardPayment() {
+    closeCardPayment();
+    bkReset();
   }
 
   function buildBookingSummaryText() {
@@ -1190,6 +1412,7 @@
     const grandTotal = pkgPrice + extrasTotal;
     let text = 'Привет! Хочу оформить бронь:\n';
     if (bkData.package) text += `Тариф: ${bkData.package} — ${pkgPrice.toLocaleString('ru-RU')} ₽\n`;
+    if (bkData.room)    text += `Зал: ${bkData.room}\n`;
     if (bkData.date)    text += `Дата: ${bkData.date}\n`;
     if (bkData.time)    text += `Время: ${bkData.time}\n`;
     if (bkData.comment) text += `Комментарий: ${bkData.comment}\n`;

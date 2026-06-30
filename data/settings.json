@@ -112,7 +112,7 @@
         "Диван-кровать",
         "Декор включён"
       ],
-      "photo": "/uploads/room_1782467002421.jpg"
+      "photo": "/uploads/room_1782855388944.jpg"
     },
     {
       "id": "room_2",
@@ -124,11 +124,11 @@
         "Xbox One",
         "Барная стойка"
       ],
-      "photo": "/uploads/room_1782467269232.jpg"
+      "photo": "/uploads/room_1782855407537.jpg"
     },
     {
       "id": "room_3",
-      "name": "Космос",
+      "name": "Экзо",
       "tag": "Зал 3 · До 20 человек",
       "features": [
         "Зал-трансформер",
@@ -136,7 +136,7 @@
         "PS5",
         "Для мероприятий"
       ],
-      "photo": "/uploads/room_1782467034682.jpg"
+      "photo": "/uploads/room_1782855425451.jpg"
     }
   ],
   "packages": [

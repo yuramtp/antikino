@@ -4,6 +4,7 @@ const http = require('http');
 const https = require('https');
 const TelegramBot = require('node-telegram-bot-api');
 const multer = require('multer');
+const sharp = require('sharp');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -26,6 +27,26 @@ const SNACKS_FILE = path.join(DATA_DIR, 'snacks.json');
 
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+
+// ─── Скачивание фото из Telegram с конвертацией в AVIF ───────────────────────
+function downloadPhotoAsAvif(fileUrl, prefix) {
+  return new Promise((resolve, reject) => {
+    https.get(fileUrl, (response) => {
+      const chunks = [];
+      response.on('data', (c) => chunks.push(c));
+      response.on('end', async () => {
+        try {
+          const filename = `${prefix}_${Date.now()}.avif`;
+          await sharp(Buffer.concat(chunks)).avif({ quality: 60, effort: 4 }).toFile(path.join(UPLOADS_DIR, filename));
+          resolve(filename);
+        } catch (err) {
+          reject(err);
+        }
+      });
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 // ─── Multer для загрузки QR-картинок ─────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -1105,93 +1126,61 @@ if (!BOT_TOKEN) {
 
     // ── Фото зала ──
     if (st.action === 'room_photo') {
-      const filename = 'room_' + Date.now() + ext;
-      const dest = path.join(UPLOADS_DIR, filename);
-      const file = fs.createWriteStream(dest);
-      https.get(fileUrl, (response) => {
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close();
-          const s = readJSON(SETTINGS_FILE);
-          const room = (s.rooms || []).find(r => r.id === st.id);
-          if (room) {
-            room.photo = '/uploads/' + filename;
-            writeJSON(SETTINGS_FILE, s);
-            clearState(chatId);
-            bot.sendMessage(chatId, '✅ Фото зала обновлено!');
-            sendRoomCard(chatId, room);
-          }
-        });
-      });
+      const filename = await downloadPhotoAsAvif(fileUrl, 'room');
+      const s = readJSON(SETTINGS_FILE);
+      const room = (s.rooms || []).find(r => r.id === st.id);
+      if (room) {
+        room.photo = '/uploads/' + filename;
+        writeJSON(SETTINGS_FILE, s);
+        clearState(chatId);
+        bot.sendMessage(chatId, '✅ Фото зала обновлено!');
+        sendRoomCard(chatId, room);
+      }
       return;
     }
 
     // ── Фото тарифа ──
     if (st.action === 'pkg_image') {
-      const filename = 'pkg_' + Date.now() + ext;
-      const dest = path.join(UPLOADS_DIR, filename);
-      const file = fs.createWriteStream(dest);
-      https.get(fileUrl, (response) => {
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close();
-          const s = readJSON(SETTINGS_FILE);
-          const pkg = (s.packages || []).find(p => p.id === st.id);
-          if (pkg) {
-            pkg.image = '/uploads/' + filename;
-            writeJSON(SETTINGS_FILE, s);
-            clearState(chatId);
-            bot.sendMessage(chatId, '✅ Фон тарифа обновлён!');
-            sendPackageCard(chatId, pkg);
-          }
-        });
-      });
+      const filename = await downloadPhotoAsAvif(fileUrl, 'pkg');
+      const s = readJSON(SETTINGS_FILE);
+      const pkg = (s.packages || []).find(p => p.id === st.id);
+      if (pkg) {
+        pkg.image = '/uploads/' + filename;
+        writeJSON(SETTINGS_FILE, s);
+        clearState(chatId);
+        bot.sendMessage(chatId, '✅ Фон тарифа обновлён!');
+        sendPackageCard(chatId, pkg);
+      }
       return;
     }
 
     // ── Фото снека (фон карточки) ──
     if (st.action === 'snack_image') {
-      const filename = 'snack_' + Date.now() + ext;
-      const dest = path.join(UPLOADS_DIR, filename);
-      const file = fs.createWriteStream(dest);
-      https.get(fileUrl, (response) => {
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close();
-          const snacks = readJSON(SNACKS_FILE);
-          const snack = snacks.find(s => s.id === st.id);
-          if (snack) {
-            snack.image = '/uploads/' + filename;
-            writeJSON(SNACKS_FILE, snacks);
-            clearState(chatId);
-            bot.sendMessage(chatId, '✅ Фоновая картинка снека обновлена!');
-            bot.emit('callback_query', { id: '', from: msg.from, message: { chat: { id: chatId } }, data: `snack_view_${st.id}` });
-          }
-        });
-      });
+      const filename = await downloadPhotoAsAvif(fileUrl, 'snack');
+      const snacks = readJSON(SNACKS_FILE);
+      const snack = snacks.find(s => s.id === st.id);
+      if (snack) {
+        snack.image = '/uploads/' + filename;
+        writeJSON(SNACKS_FILE, snacks);
+        clearState(chatId);
+        bot.sendMessage(chatId, '✅ Фоновая картинка снека обновлена!');
+        bot.emit('callback_query', { id: '', from: msg.from, message: { chat: { id: chatId } }, data: `snack_view_${st.id}` });
+      }
       return;
     }
 
     // ── Фото миниатюры снека ──
     if (st.action === 'snack_thumb') {
-      const filename = 'snack_thumb_' + Date.now() + ext;
-      const dest = path.join(UPLOADS_DIR, filename);
-      const file = fs.createWriteStream(dest);
-      https.get(fileUrl, (response) => {
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close();
-          const snacks = readJSON(SNACKS_FILE);
-          const snack = snacks.find(s => s.id === st.id);
-          if (snack) {
-            snack.thumb = '/uploads/' + filename;
-            writeJSON(SNACKS_FILE, snacks);
-            clearState(chatId);
-            bot.sendMessage(chatId, '✅ Миниатюра снека обновлена!');
-            bot.emit('callback_query', { id: '', from: msg.from, message: { chat: { id: chatId } }, data: `snack_view_${st.id}` });
-          }
-        });
-      });
+      const filename = await downloadPhotoAsAvif(fileUrl, 'snack_thumb');
+      const snacks = readJSON(SNACKS_FILE);
+      const snack = snacks.find(s => s.id === st.id);
+      if (snack) {
+        snack.thumb = '/uploads/' + filename;
+        writeJSON(SNACKS_FILE, snacks);
+        clearState(chatId);
+        bot.sendMessage(chatId, '✅ Миниатюра снека обновлена!');
+        bot.emit('callback_query', { id: '', from: msg.from, message: { chat: { id: chatId } }, data: `snack_view_${st.id}` });
+      }
       return;
     }
 

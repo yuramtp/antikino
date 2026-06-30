@@ -127,6 +127,8 @@
     min-height: 100vh; display: flex; align-items: center;
     padding: 0 48px; position: relative; overflow: hidden;
     background: url('4.jpg') no-repeat center center / cover;
+    background: -webkit-image-set(url('4.avif') type('image/avif') 1x, url('4.jpg') type('image/jpeg') 1x) no-repeat center center / cover;
+    background: image-set(url('4.avif') type('image/avif') 1x, url('4.jpg') type('image/jpeg') 1x) no-repeat center center / cover;
   }
   .hero-bg { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse at 70% 50%, rgba(208,2,27,0.12) 0%, transparent 60%); }
   .hero-overlay { position: absolute; inset: 0; z-index: 0; background: rgba(10,10,10,0.55); }
@@ -185,6 +187,7 @@
   .step-bg {
     position: absolute; inset: 0; z-index: 0;
   }
+  .step-bg picture { display: block; width: 100%; height: 100%; }
   .step-bg img {
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
@@ -339,13 +342,14 @@
   .bk-modal-close:hover { color: white; }
 
   /* BOOKING STEPS */
-  .bk-steps { display: flex; align-items: center; margin-bottom: 4px; }
+  .bk-steps { display: flex; align-items: flex-start; margin-bottom: 20px; }
+  .bk-si-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
   .bk-si { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: rgba(255,255,255,0.35); flex-shrink: 0; transition: all 0.3s; }
   .bk-si.active { border-color: var(--red); color: var(--white); background: var(--red); }
   .bk-si.done { border-color: var(--red); color: var(--red); background: rgba(208,2,27,0.12); }
-  .bk-si-line { flex: 1; height: 2px; background: rgba(255,255,255,0.1); margin: 0 6px; transition: background 0.3s; }
+  .bk-si-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; white-space: nowrap; }
+  .bk-si-line { flex: 1; height: 2px; background: rgba(255,255,255,0.1); margin: 15px 6px 0; transition: background 0.3s; }
   .bk-si-line.done { background: var(--red); }
-  .bk-step-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 20px; padding: 0 4px; }
   .bk-step { animation: bkFadeIn 0.25s ease; }
   @keyframes bkFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -531,14 +535,14 @@
   /* TG CALLBACK BUTTON */
   #tgCallBtn { width: 56px; height: 56px; border-radius: 50%; background: #29a8e8; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 12px rgba(0,0,0,0.4); transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
   #tgCallBtn:hover { transform: scale(1.08); background: #1a8fc8; }
-  #tgCallPopup { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; width: 220px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: none; flex-direction: column; gap: 10px; }
+  #tgCallPopup { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 22px; width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: none; flex-direction: column; gap: 14px; }
   #tgCallPopup.open { display: flex; }
-  .tg-popup-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: var(--white); }
-  .tg-popup-sub { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
-  #tgCallPhone { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: var(--white); font-size: 13px; font-family: 'Inter', sans-serif; width: 100%; transition: border-color 0.2s; }
+  .tg-popup-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; color: var(--white); }
+  .tg-popup-sub { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+  #tgCallPhone { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px 14px; color: var(--white); font-size: 15px; font-family: 'Inter', sans-serif; width: 100%; transition: border-color 0.2s; }
   #tgCallPhone:focus { outline: none; border-color: #29a8e8; }
   #tgCallPhone::placeholder { color: rgba(255,255,255,0.25); }
-  #tgCallSendBtn { background: #29a8e8; color: white; border: none; border-radius: 8px; padding: 9px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; transition: background 0.2s; }
+  #tgCallSendBtn { background: #29a8e8; color: white; border: none; border-radius: 8px; padding: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; cursor: pointer; transition: background 0.2s; }
   #tgCallSendBtn:hover { background: #1a8fc8; }
   #tgCallDone { font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; display: none; padding: 4px 0; }
 
@@ -591,7 +595,7 @@
 
     #chatWindow { width: calc(100vw - 48px); max-width: 320px; }
     #chatWidget { bottom: 16px; right: 16px; }
-    #tgCallPopup { width: min(220px, calc(100vw - 80px)); }
+    #tgCallPopup { width: min(280px, calc(100vw - 48px)); }
   }
 </style>
 </head>
@@ -721,12 +725,12 @@
   <div class="section-label">Почему мы</div>
   <div class="section-title">Полная свобода — внутри зала</div>
   <div class="steps-grid">
-    <div class="step"><div class="step-bg"><img src="6.jpg" alt=""></div><div class="step-content"><div class="step-num">01</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="step-name">Экран во всю стену</div><div class="step-text">Проектор и звуковая система кинотеатрального уровня. Кино, сериалы, спорт — что хочешь.</div></div></div>
-    <div class="step"><div class="step-bg"><img src="11.jpg" alt=""></div><div class="step-content"><div class="step-num">02</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="step-name">Своя музыка</div><div class="step-text">Подключи телефон, запусти любой плейлист. Зал полностью под тебя.</div></div></div>
-    <div class="step"><div class="step-bg"><img src="10.jpg" alt=""></div><div class="step-content"><div class="step-num">03</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="step-name">Только свои</div><div class="step-text">Зал арендуется целиком. Свидание, день рождения, мальчишник — только ваша компания.</div></div></div>
-    <div class="step"><div class="step-bg"><img src="9.jpg" alt=""></div><div class="step-content"><div class="step-num">04</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="step-name">Романтика на высший балл</div><div class="step-text">Декор, свечи, вино — принеси своё или закажи у нас. Создадим нужную атмосферу.</div></div></div>
-    <div class="step"><div class="step-bg"><img src="8.jpg" alt=""></div><div class="step-content"><div class="step-num">05</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="step-name">Для бизнеса тоже</div><div class="step-text">Подключи ноутбук, проведи презентацию в нестандартной обстановке.</div></div></div>
-    <div class="step"><div class="step-bg"><img src="7.webp" alt=""></div><div class="step-content"><div class="step-num">06</div><div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="step-name">Круглосуточно</div><div class="step-text">Ночью или утром — мы открыты. Бронируй удобное время без ограничений.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="6.avif" type="image/avif"><img src="6.jpg" alt=""></picture></div><div class="step-content"><div class="step-num">01</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="step-name">Экран во всю стену</div><div class="step-text">Проектор и звуковая система кинотеатрального уровня. Кино, сериалы, спорт — что хочешь.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="11.avif" type="image/avif"><img src="11.jpg" alt=""></picture></div><div class="step-content"><div class="step-num">02</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="step-name">Своя музыка</div><div class="step-text">Подключи телефон, запусти любой плейлист. Зал полностью под тебя.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="10.avif" type="image/avif"><img src="10.jpg" alt=""></picture></div><div class="step-content"><div class="step-num">03</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="step-name">Только свои</div><div class="step-text">Зал арендуется целиком. Свидание, день рождения, мальчишник — только ваша компания.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="9.avif" type="image/avif"><img src="9.jpg" alt=""></picture></div><div class="step-content"><div class="step-num">04</div><div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="step-name">Романтика на высший балл</div><div class="step-text">Декор, свечи, вино — принеси своё или закажи у нас. Создадим нужную атмосферу.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="8.avif" type="image/avif"><img src="8.jpg" alt=""></picture></div><div class="step-content"><div class="step-num">05</div><div class="step-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="step-name">Для бизнеса тоже</div><div class="step-text">Подключи ноутбук, проведи презентацию в нестандартной обстановке.</div></div></div>
+    <div class="step"><div class="step-bg"><picture><source srcset="7.avif" type="image/avif"><img src="7.webp" alt=""></picture></div><div class="step-content"><div class="step-num">06</div><div class="step-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="step-name">Круглосуточно</div><div class="step-text">Ночью или утром — мы открыты. Бронируй удобное время без ограничений.</div></div></div>
   </div>
 </section>
 
@@ -827,15 +831,14 @@
     </div>
 
     <div class="bk-steps">
-      <div class="bk-si active" id="bsi1"><span>1</span></div>
+      <div class="bk-si-col"><div class="bk-si active" id="bsi1"><span>1</span></div><span class="bk-si-label">Детали</span></div>
       <div class="bk-si-line" id="bsiL1"></div>
-      <div class="bk-si" id="bsi2"><span>2</span></div>
+      <div class="bk-si-col"><div class="bk-si" id="bsi2"><span>2</span></div><span class="bk-si-label">Зал</span></div>
       <div class="bk-si-line" id="bsiL2"></div>
-      <div class="bk-si" id="bsi3"><span>3</span></div>
+      <div class="bk-si-col"><div class="bk-si" id="bsi3"><span>3</span></div><span class="bk-si-label">Допы</span></div>
       <div class="bk-si-line" id="bsiL3"></div>
-      <div class="bk-si" id="bsi4"><span>4</span></div>
+      <div class="bk-si-col"><div class="bk-si" id="bsi4"><span>4</span></div><span class="bk-si-label">Итог</span></div>
     </div>
-    <div class="bk-step-labels"><span>Детали</span><span>Зал</span><span>Допы</span><span>Итог</span></div>
 
     <!-- Шаг 1 -->
     <div id="bStep1" class="bk-step">
@@ -1200,6 +1203,8 @@
       `<div class="bk-summary-row"><span>${s.emoji} ${s.name} × ${extrasQty[s.id]}</span><span>${(s.price*extrasQty[s.id]).toLocaleString('ru-RU')} ₽</span></div>`
     ).join('');
 
+    const grandTotal = (bkData.price || 0) + extrasTotal;
+
     el.innerHTML = `
       <div class="bk-summary-block">
         <div class="bk-summary-label">Детали брони</div>
@@ -1210,7 +1215,10 @@
         <div class="bk-summary-label">Допы</div>
         ${extrasRows}
         <div class="bk-summary-row bk-summary-total"><span>Итого допы</span><span>${extrasTotal.toLocaleString('ru-RU')} ₽</span></div>
-      </div>` : ''}`;
+      </div>` : ''}
+      <div class="bk-summary-block">
+        <div class="bk-summary-row bk-summary-total"><span>Итого к оплате</span><span>${grandTotal.toLocaleString('ru-RU')} ₽</span></div>
+      </div>`;
   }
 
   function submitBooking() {

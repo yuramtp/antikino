@@ -13,6 +13,8 @@
   .page-bg {
     position: fixed; inset: 0; z-index: 0;
     background: url('1212.jpeg') no-repeat center center / cover;
+    background: -webkit-image-set(url('1212.avif') type('image/avif') 1x, url('1212.jpeg') type('image/jpeg') 1x) no-repeat center center / cover;
+    background: image-set(url('1212.avif') type('image/avif') 1x, url('1212.jpeg') type('image/jpeg') 1x) no-repeat center center / cover;
   }
   .page-bg::after {
     content: ''; position: absolute; inset: 0;

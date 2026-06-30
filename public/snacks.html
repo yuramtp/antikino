@@ -11,6 +11,8 @@
   body {
     font-family: 'Inter', sans-serif;
     background: var(--black) url('2.jpg') no-repeat fixed center center / cover;
+    background: var(--black) -webkit-image-set(url('2.avif') type('image/avif') 1x, url('2.jpg') type('image/jpeg') 1x) no-repeat fixed center center / cover;
+    background: var(--black) image-set(url('2.avif') type('image/avif') 1x, url('2.jpg') type('image/jpeg') 1x) no-repeat fixed center center / cover;
     color: var(--white);
     min-height: 100vh;
     position: relative;

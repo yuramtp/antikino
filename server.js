@@ -12,7 +12,10 @@ const WebSocket = require('ws');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const ADMIN_CHAT_ID = parseInt(process.env.ADMIN_CHAT_ID);
+const ADMIN_CHAT_IDS = (process.env.ADMIN_CHAT_IDS || process.env.ADMIN_CHAT_ID || '')
+  .split(',')
+  .map(id => parseInt(id.trim()))
+  .filter(id => !isNaN(id));
 const SUPPORT_GROUP_ID = -1004411290413;
 
 // ─── Пути к данным ───────────────────────────────────────────────────────────
@@ -74,14 +77,14 @@ app.post('/api/booking', async (req, res) => {
     `\n💰 *ИТОГО: ${grandTotal.toLocaleString('ru-RU')} ₽*`,
   ].filter(Boolean).join('\n');
 
-  bot.sendMessage(ADMIN_CHAT_ID, lines, { parse_mode: 'Markdown' }).catch(() => {});
+  ADMIN_CHAT_IDS.forEach(id => bot.sendMessage(id, lines, { parse_mode: 'Markdown' }).catch(() => {}));
 });
 
 app.post('/api/callback', (req, res) => {
   const { phone } = req.body || {};
   res.json({ ok: true });
   if (!bot || !phone) return;
-  bot.sendMessage(ADMIN_CHAT_ID, `📞 *Запрос звонка*\n\nТелефон: ${phone}`, { parse_mode: 'Markdown' }).catch(() => {});
+  ADMIN_CHAT_IDS.forEach(id => bot.sendMessage(id, `📞 *Запрос звонка*\n\nТелефон: ${phone}`, { parse_mode: 'Markdown' }).catch(() => {}));
 });
 
 // ─── Чат техподдержки: сессии ────────────────────────────────────────────────
@@ -194,7 +197,7 @@ if (!BOT_TOKEN) {
 } else {
   bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-  const isAdmin = (msg) => msg.chat.id === ADMIN_CHAT_ID;
+  const isAdmin = (msg) => ADMIN_CHAT_IDS.includes(msg.chat.id);
 
   const state = {};
   const setState = (chatId, s) => { state[chatId] = s; };
@@ -497,7 +500,7 @@ if (!BOT_TOKEN) {
   // ── Callback-кнопки ─────────────────────────────────────────────────────────
   bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
-    if (chatId !== ADMIN_CHAT_ID) return;
+    if (!ADMIN_CHAT_IDS.includes(chatId)) return;
     const data = query.data;
     bot.answerCallbackQuery(query.id);
 

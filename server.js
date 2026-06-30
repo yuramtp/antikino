@@ -201,6 +201,83 @@ if (!BOT_TOKEN) {
   const getState = (chatId) => state[chatId] || null;
   const clearState = (chatId) => { delete state[chatId]; };
 
+  // ── Массовое добавление городов: "Г. ГОРОД, УЛ. УЛИЦА, Д. НОМЕР" ──────────────
+  let idCounter = 0;
+  const genId = () => `${Date.now()}_${(idCounter++).toString(36)}`;
+
+  const toSentenceCase = (str) => {
+    const lower = str.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
+
+  const toCityTitleCase = (str) => str.toLowerCase()
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  const STREET_MARKER = /(^|[\s,])(УЛ\.|УЛИЦА|ПР\.|ПРОСПЕКТ|ПЕР\.|ПЕРЕУЛОК|Ш\.|ШОССЕ|НАБ\.|НАБЕРЕЖНАЯ|БУЛЬВАР|БУЛ\.|ПЛ\.|ПЛОЩАДЬ|ПРОЕЗД)(?=[\s,.]|$)/i;
+
+  // Разбирает строку вида "Г. ГОРОД, УЛ. УЛИЦА, Д. НОМЕР" на { city, address }.
+  // Источники бывают неаккуратными (точка вместо запятой, пропущенный разделитель),
+  // поэтому ищем самую раннюю из двух точек разделения: запятую или маркер улицы.
+  const parseCityAddressLine = (line) => {
+    const t = line.trim().replace(/\s+/g, ' ');
+    if (!t) return null;
+    const m = /^Г\.?\s*(.+)$/i.exec(t);
+    if (!m) return null;
+    const rest = m[1];
+
+    const commaIdx = rest.indexOf(',');
+    const markerMatch = STREET_MARKER.exec(rest);
+    const markerIdx = markerMatch ? markerMatch.index + markerMatch[1].length : -1;
+
+    let splitIdx;
+    if (commaIdx !== -1 && (markerIdx === -1 || commaIdx <= markerIdx)) {
+      splitIdx = commaIdx;
+    } else if (markerIdx !== -1) {
+      splitIdx = markerIdx;
+    } else {
+      return null;
+    }
+
+    const city = rest.slice(0, splitIdx).trim().replace(/[.,]+$/, '').trim();
+    const address = rest.slice(splitIdx).trim().replace(/^[.,]+\s*/, '').trim();
+    if (!city || !address) return null;
+    return { city, address };
+  };
+
+  // Разбирает многострочный текст и сохраняет города/адреса в settings.
+  // Существующие города (сравнение без учёта регистра) дополняются новыми адресами,
+  // остальные строки создают новые города. Возвращает отчёт для администратора.
+  const bulkAddCities = (rawText) => {
+    const s = readJSON(SETTINGS_FILE);
+    const lines = rawText.split('\n');
+    let newCities = 0, newAddresses = 0;
+    const failed = [];
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const parsed = parseCityAddressLine(line);
+      if (!parsed) { failed.push(line.trim()); continue; }
+
+      const address = toSentenceCase(parsed.address);
+      let city = s.cities.find(c => c.name.toLowerCase() === parsed.city.toLowerCase());
+      if (!city) {
+        city = { id: genId(), name: toCityTitleCase(parsed.city), addresses: [] };
+        s.cities.push(city);
+        newCities++;
+      }
+      const exists = city.addresses.some(a => a.address.toLowerCase() === address.toLowerCase());
+      if (!exists) {
+        city.addresses.push({ id: genId(), address });
+        newAddresses++;
+      }
+    }
+
+    writeJSON(SETTINGS_FILE, s);
+    return { newCities, newAddresses, failed };
+  };
+
   // ── /start или /help ────────────────────────────────────────────────────────
   bot.onText(/\/(start|help)/, (msg) => {
     if (!isAdmin(msg)) return;
@@ -292,7 +369,10 @@ if (!BOT_TOKEN) {
     const s = readJSON(SETTINGS_FILE);
     if (s.cities.length === 0) {
       bot.sendMessage(chatId, '🏙 Городов нет. Добавь первый:', {
-        reply_markup: { inline_keyboard: [[{ text: '➕ Добавить город', callback_data: 'city_add' }]] }
+        reply_markup: { inline_keyboard: [
+          [{ text: '➕ Добавить город', callback_data: 'city_add' }],
+          [{ text: '📋 Массово добавить', callback_data: 'city_bulk_add' }]
+        ] }
       });
       return;
     }
@@ -300,6 +380,7 @@ if (!BOT_TOKEN) {
       { text: `🏙 ${c.name} (${c.addresses.length} адр.)`, callback_data: `city_view_${c.id}` }
     ]);
     buttons.push([{ text: '➕ Добавить город', callback_data: 'city_add' }]);
+    buttons.push([{ text: '📋 Массово добавить', callback_data: 'city_bulk_add' }]);
     bot.sendMessage(chatId, '🏙 *Города:*', {
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: buttons }
@@ -532,6 +613,15 @@ if (!BOT_TOKEN) {
     } else if (data === 'city_add') {
       setState(chatId, { action: 'city_add' });
       bot.sendMessage(chatId, '🏙 Введи название нового города:');
+    } else if (data === 'city_bulk_add') {
+      setState(chatId, { action: 'city_bulk_add' });
+      bot.sendMessage(chatId,
+        '📋 Отправь список городов и адресов одним сообщением, по одному адресу на строку, в формате:\n\n' +
+        '`Г. АДЛЕР, УЛ. ДЕМОКРАТИЧЕСКАЯ, Д. 52`\n' +
+        '`Г. МОСКВА, ХОДЫНСКИЙ БУЛЬВАР, Д. 4`\n\n' +
+        'Существующие города дополнятся новыми адресами, остальные будут созданы.',
+        { parse_mode: 'Markdown' }
+      );
     } else if (data.startsWith('city_view_')) {
       const cityId = data.replace('city_view_', '');
       const s = readJSON(SETTINGS_FILE);
@@ -740,6 +830,7 @@ if (!BOT_TOKEN) {
   bot.on('message', async (msg) => {
     // Сообщения из группы техподдержки → пробрасываем в WebSocket клиента
     if (msg.chat.id === SUPPORT_GROUP_ID && msg.message_thread_id && !msg.from?.is_bot) {
+      console.log(`[Чат ТП] Получено сообщение из темы ${msg.message_thread_id} от ${msg.from?.first_name}: ${(msg.text||'(не текст)').slice(0,100)}`);
       const sessionId = threadToSession.get(msg.message_thread_id);
       if (sessionId) {
         const session = chatSessions.get(sessionId);
@@ -749,7 +840,12 @@ if (!BOT_TOKEN) {
             text: msg.text || '',
             from: msg.from?.first_name || 'Оператор'
           }));
+          console.log(`[Чат ТП] → отправлено клиенту ${session.name}`);
+        } else {
+          console.log(`[Чат ТП] ⚠️ сессия есть, но WebSocket не OPEN (readyState=${session?.ws?.readyState})`);
         }
+      } else {
+        console.log(`[Чат ТП] ⚠️ threadId ${msg.message_thread_id} не найден в threadToSession`);
       }
       return;
     }
@@ -837,6 +933,17 @@ if (!BOT_TOKEN) {
         clearState(chatId);
         bot.sendMessage(chatId, `✅ Адрес добавлен!`);
       }
+    } else if (st.action === 'city_bulk_add' && text) {
+      clearState(chatId);
+      const { newCities, newAddresses, failed } = bulkAddCities(text);
+      let report = `✅ Готово!\n🏙 Новых городов: ${newCities}\n📍 Новых адресов: ${newAddresses}`;
+      if (failed.length > 0) {
+        const shown = failed.slice(0, 10).map(l => `• ${l}`).join('\n');
+        report += `\n\n⚠️ Не распознано строк: ${failed.length}\n${shown}`;
+        if (failed.length > 10) report += `\n…и ещё ${failed.length - 10}`;
+      }
+      bot.sendMessage(chatId, report);
+      sendCitiesList(chatId);
 
     // ── Тарифы — добавление ──
     } else if (st.action === 'pkg_add') {

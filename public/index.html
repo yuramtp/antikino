@@ -1528,13 +1528,13 @@
     renderCities(val);
   }
 
-  // Шаг 1 → 2: выбрали город, теперь выбираем адрес (если он не единственный)
+  // Шаг 1 → 2: выбрали город, теперь выбираем адрес
   function openCityAddresses(id) {
     const cities = siteData.cities || [];
     const city = cities.find(c => c.id === id);
     if (!city) return;
-    if (city.addresses.length <= 1) {
-      finalizeCitySelection(city, city.addresses[0] || null);
+    if (city.addresses.length === 0) {
+      finalizeCitySelection(city, null);
       return;
     }
     pendingCity = city;

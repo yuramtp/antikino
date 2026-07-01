@@ -70,6 +70,12 @@
     width: 10px; height: 10px; background: var(--red);
     border-radius: 50%; margin: 0 auto 20px;
   }
+  .city-modal-back {
+    background: none; border: none; color: rgba(255,255,255,0.6); font-size: 13px;
+    cursor: pointer; padding: 0; margin-bottom: 14px; text-align: left;
+    font-family: 'Inter', sans-serif; transition: color 0.2s; align-self: flex-start;
+  }
+  .city-modal-back:hover { color: var(--white); }
   .city-modal h3 {
     font-family: 'Montserrat', sans-serif; font-weight: 900;
     font-size: 24px; margin-bottom: 6px; text-align: center; color: var(--white);
@@ -605,9 +611,10 @@
 <div class="city-modal-overlay" id="cityModal">
   <div class="city-modal">
     <div class="city-modal-dot"></div>
-    <h3>Выберите город</h3>
-    <div class="city-modal-sub">Для отображения актуальной информации</div>
-    <div class="city-search-wrap">
+    <button class="city-modal-back" id="cityModalBack" onclick="backToCityList()" style="display:none">‹ К списку городов</button>
+    <h3 id="cityModalTitle">Выберите город</h3>
+    <div class="city-modal-sub" id="cityModalSub">Для отображения актуальной информации</div>
+    <div class="city-search-wrap" id="citySearchWrap">
       <span class="city-search-icon">🔍</span>
       <input class="city-search" id="citySearch" type="text" placeholder="Поиск города..." oninput="filterCities(this.value)" autocomplete="off">
     </div>
@@ -1419,6 +1426,8 @@
     const pkgPrice = bkData.price || 0;
     const grandTotal = pkgPrice + extrasTotal;
     let text = 'Привет! Хочу оформить бронь:\n';
+    if (selectedCity)    text += `Город: ${selectedCity.name}\n`;
+    if (selectedAddress) text += `Адрес: ${selectedAddress.address}\n`;
     if (bkData.package) text += `Тариф: ${bkData.package} — ${pkgPrice.toLocaleString('ru-RU')} ₽\n`;
     if (bkData.room)    text += `Зал: ${bkData.room}\n`;
     if (bkData.date)    text += `Дата: ${bkData.date}\n`;
@@ -1474,9 +1483,18 @@
     }).join('');
   }
 
-  // ─── Города ──────────────────────────────────────────────────────────────
+  // ─── Города и адреса ─────────────────────────────────────────────────────
   let selectedCity = null;
+  let selectedAddress = null;
   let cityChosen = false;
+  let pendingCity = null; // город, для которого сейчас выбирается адрес
+
+  function pluralAddr(n) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'адрес';
+    if ([2,3,4].includes(m10) && ![12,13,14].includes(m100)) return 'адреса';
+    return 'адресов';
+  }
 
   function renderCities(filter = '') {
     const cities = siteData.cities || [];
@@ -1495,11 +1513,11 @@
     }
 
     list.innerHTML = filtered.map(c => `
-      <div class="city-item ${selectedCity?.id === c.id ? 'active' : ''}" onclick="selectCity('${c.id}')">
+      <div class="city-item ${selectedCity?.id === c.id ? 'active' : ''}" onclick="openCityAddresses('${c.id}')">
         <div class="city-item-pin">📍</div>
         <div class="city-item-body">
-          <div class="city-item-name">Г. ${c.name.toUpperCase()}${c.addresses[0] ? ', ' + c.addresses[0].address.toUpperCase() : ''}</div>
-          ${c.addresses.length > 1 ? `<div class="city-item-addrs">+${c.addresses.length - 1} адрес</div>` : ''}
+          <div class="city-item-name">Г. ${c.name.toUpperCase()}</div>
+          <div class="city-item-addrs">${c.addresses.length} ${pluralAddr(c.addresses.length)}</div>
         </div>
         <div class="city-item-arrow">›</div>
       </div>
@@ -1510,26 +1528,69 @@
     renderCities(val);
   }
 
-  function selectCity(id, closeModal = true) {
+  // Шаг 1 → 2: выбрали город, теперь выбираем адрес (если он не единственный)
+  function openCityAddresses(id) {
     const cities = siteData.cities || [];
-    selectedCity = cities.find(c => c.id === id);
-    if (selectedCity) {
-      cityChosen = true;
-      document.getElementById('currentCityLabel').textContent = selectedCity.name;
-      const addrs = selectedCity.addresses;
-      document.getElementById('footerAddress').textContent = addrs.length > 0 ? '📍 ' + addrs.map(a => a.address).join(', ') : '';
-      renderCities();
+    const city = cities.find(c => c.id === id);
+    if (!city) return;
+    if (city.addresses.length <= 1) {
+      finalizeCitySelection(city, city.addresses[0] || null);
+      return;
     }
-    if (closeModal) closeCityModal();
+    pendingCity = city;
+    renderAddressStep();
+  }
+
+  function renderAddressStep() {
+    document.getElementById('cityModalTitle').textContent = 'Выберите адрес';
+    document.getElementById('cityModalSub').textContent = 'Г. ' + pendingCity.name;
+    document.getElementById('citySearchWrap').style.display = 'none';
+    document.getElementById('cityModalBack').style.display = 'block';
+    const list = document.getElementById('cityList');
+    list.innerHTML = pendingCity.addresses.map(a => `
+      <div class="city-item ${selectedAddress?.id === a.id ? 'active' : ''}" onclick="selectAddress('${a.id}')">
+        <div class="city-item-pin">📍</div>
+        <div class="city-item-body">
+          <div class="city-item-name">${a.address.toUpperCase()}</div>
+        </div>
+        <div class="city-item-arrow">›</div>
+      </div>
+    `).join('');
+  }
+
+  function selectAddress(addrId) {
+    const addr = pendingCity.addresses.find(a => a.id === addrId);
+    finalizeCitySelection(pendingCity, addr || null);
+  }
+
+  function backToCityList(rerender = true) {
+    pendingCity = null;
+    document.getElementById('cityModalTitle').textContent = 'Выберите город';
+    document.getElementById('cityModalSub').textContent = 'Для отображения актуальной информации';
+    document.getElementById('citySearchWrap').style.display = '';
+    document.getElementById('cityModalBack').style.display = 'none';
+    if (rerender) renderCities();
+  }
+
+  function finalizeCitySelection(city, address) {
+    selectedCity = city;
+    selectedAddress = address;
+    cityChosen = true;
+    document.getElementById('currentCityLabel').textContent = city.name;
+    document.getElementById('footerAddress').textContent = address ? '📍 ' + address.address : '';
+    backToCityList(false);
+    closeCityModal();
     initAnimations();
   }
 
   function openCityModal() {
     const overlay = document.getElementById('cityModal');
     overlay.classList.add('open');
+    backToCityList(false);
     // Сбрасываем поиск
     const s = document.getElementById('citySearch');
-    if (s) { s.value = ''; renderCities(); }
+    if (s) s.value = '';
+    renderCities();
   }
 
   function closeCityModal() {

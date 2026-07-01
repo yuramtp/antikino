@@ -618,6 +618,13 @@ if (!BOT_TOKEN) {
       const id = data.replace('snack_edit_emoji_', '');
       setState(chatId, { action: 'snack_edit', field: 'emoji', id });
       bot.sendMessage(chatId, '😀 Отправь эмодзи:');
+    } else if (data.startsWith('snack_delete_confirm_')) {
+      const id = data.replace('snack_delete_confirm_', '');
+      let snacks = readJSON(SNACKS_FILE);
+      snacks = snacks.filter(s => s.id !== id);
+      writeJSON(SNACKS_FILE, snacks);
+      bot.sendMessage(chatId, '✅ Снек удалён!');
+      sendSnacksList(chatId);
     } else if (data.startsWith('snack_delete_')) {
       const id = data.replace('snack_delete_', '');
       const snacks = readJSON(SNACKS_FILE);
@@ -631,13 +638,6 @@ if (!BOT_TOKEN) {
           ]
         }
       });
-    } else if (data.startsWith('snack_delete_confirm_')) {
-      const id = data.replace('snack_delete_confirm_', '');
-      let snacks = readJSON(SNACKS_FILE);
-      snacks = snacks.filter(s => s.id !== id);
-      writeJSON(SNACKS_FILE, snacks);
-      bot.sendMessage(chatId, '✅ Снек удалён!');
-      sendSnacksList(chatId);
     } else if (data.startsWith('snack_image_')) {
       const id = data.replace('snack_image_', '');
       if (id.startsWith('clear_')) {
